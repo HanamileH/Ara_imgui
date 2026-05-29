@@ -1,6 +1,6 @@
 from ara_imgui import App, imgui
 
-app = App("Basic Window", log_level="info")
+app = App("Basic Window")
 
 name = ""
 def gui():
@@ -13,13 +13,6 @@ def gui():
       print(f"Input text: {name}")
 
    imgui.text(f"Hello, {name if name else "Unknown"}!")
-   
-   io = imgui.get_io()
-   
-   imgui.text(f"Keys down: {sum(io.keys_down)}")
-   
-   if app.core.key_down("w"):
-      print("w is pressed!")
 
 
 app.run(gui)
