@@ -5,8 +5,7 @@
 ## Features
 
 - Simple ImGui app launch with a single `run` function
-- Support for multiple ImGui windows via the `Window` class
-- Built-in dark and light themes
+- Support various themes
 - System or custom font loading, including Cyrillic support
 - Ready-to-run examples included in the `examples` folder
 
@@ -14,12 +13,6 @@
 
 ```bash
 pip install ara_imgui
-````
-
-Or install dependencies manually:
-
-```bash
-pip install glfw PyOpenGL imgui ara_core
 ```
 
 > ⚠️ Make sure you have Python 3.7+ and OpenGL support (e.g., via GPU drivers on Windows).
@@ -29,7 +22,7 @@ pip install glfw PyOpenGL imgui ara_core
 ### Basic example
 
 ```python
-from ara_imgui import run, imgui
+from ara_imgui import App, imgui
 
 app = App("Hello world example")
 
@@ -39,27 +32,6 @@ def gui():
         print("Clicked!")
 
 app.run(gui)
-
-```
-
-### Multiple windows
-
-```python
-from ara_imgui import App, Window, imgui
-
-app = App("Multi-window App")
-
-def win_gui():
-    imgui.text("This is another window")
-
-win = Window("Extra Window", frame_ui=win_gui)
-
-def gui():
-    imgui.text("Main Window")  
-    if imgui.button("Open Extra Window"):
-        app.add_window(win)
-
-app.run(gui)
 ```
 
 ### Custom fonts and themes
@@ -67,20 +39,17 @@ app.run(gui)
 ```python
 from ara_imgui import App, imgui
 
+font_path = R"C:\Windows\Fonts\Arial.ttf"
+
 app = App("Font Example")
-app.apply_theme("light")
-app.load_font(font_size=18)
+app.apply_theme("cherry")
+app.load_font(font_path, font_size=20)
 
 def gui():
     imgui.text("Sample text with custom font")
 
 app.run(gui)
 ```
-
-## Classes
-
-* `App` — The main application class.
-* `Window` — Represents a separate ImGui window with its own logic.
 
 ## Examples
 
@@ -93,10 +62,9 @@ See the [`examples/`](./examples) folder:
 
 ## Dependencies
 
-* `ara_core`
 * `imgui`
 * `glfw`
-* `PyOpenGL`
+* `imgui_bundle`
 
 ## License
 
