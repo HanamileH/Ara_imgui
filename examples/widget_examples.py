@@ -96,12 +96,12 @@ def gui():
     imgui.separator()
     
     # Color picker
-    changed, color = imgui.color_edit3("Color picker", color[0], color[1], color[2])
+    changed, color = imgui.color_edit3("Color picker", color)
     
     imgui.separator()
     
     # Child
-    if imgui.begin_child("Child", border = True, height = 70):
+    if imgui.begin_child("Child", size=imgui.ImVec2(0, 70)):
         imgui.text("This is a child")
         imgui.text("Hello, world!")
         
@@ -132,16 +132,14 @@ def gui():
     imgui.separator()
     
     # Table
-    if imgui.begin_child("Table", border = True, height = 100):
-        imgui.columns(5, "##table columns", border = True)
-        
-        for i in range(4):
-            for j in range(5):
-                imgui.text(f"item {i} {j}")
-                imgui.next_column()
-                
-        imgui.columns(1)
-        imgui.end_child()
+    imgui.columns(5, "##table columns", borders=True)
+    
+    for i in range(4):
+        for j in range(5):
+            imgui.text(f"item {i} {j}")
+            imgui.next_column()
+            
+    imgui.columns(1)
 
 
 app.run(gui)

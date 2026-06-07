@@ -1,5 +1,7 @@
 from ara_imgui import App, imgui
 
+font_path = R"C:\Windows\Fonts\Arial.ttf"
+
 app = App("Custom font example")
 
 def gui():
@@ -20,5 +22,5 @@ def gui():
 
 
 app.apply_theme("light")
-app.load_font(font_size=20)
+app.load_font(font_path, font_size=20)
 app.run(gui)
