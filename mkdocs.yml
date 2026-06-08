@@ -1,0 +1,8 @@
+site_name: Ara Imgui documentation
+site_url: https://hanamileh.github.io/ara_imgui/
+theme:
+  name: material
+nav:
+  - Main: index.md
+  - Installing: setup.md
+  - API: api.md
