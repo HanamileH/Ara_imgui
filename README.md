@@ -17,6 +17,11 @@ pip install ara_imgui
 
 > ⚠️ Make sure you have Python 3.7+ and OpenGL support (e.g., via GPU drivers on Windows).
 
+## Documentation
+
+For detailed documentation, please refer to the [Ara_imgui documentation](https://hanamileh.github.io/Ara_imgui/).
+This documentation includes information on how to use the library, available features and widgets.
+
 ## Usage
 
 ### Basic example
