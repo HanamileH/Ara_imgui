@@ -6,3 +6,11 @@ nav:
   - Main: index.md
   - Installing: setup.md
   - API: api.md
+  - Widgets:
+      - Text: widgets/text.md
+      - Button: widgets/button.md
+      - Radio Button: widgets/radio_button.md
+      - Checkbox: widgets/checkbox.md
+      - Separator: widgets/separator.md
+      - Input Float: widgets/input_float.md
+      - Input Int: widgets/input_int.md
