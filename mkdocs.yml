@@ -4,8 +4,7 @@ theme:
   name: material
 nav:
   - Main: index.md
-  - Installing: setup.md
-  - API: api.md
+  - Cheat sheet: cheat_sheet.md
   - Widgets:
       - Text: widgets/text.md
       - Button: widgets/button.md
