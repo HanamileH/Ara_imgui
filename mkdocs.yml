@@ -18,3 +18,4 @@ nav:
       - Text wrapped: widgets/text_wrapped.md
       - Text link: widgets/text_link.md
       - Text link open url: widgets/text_link_open_url.md
+      - Begin child and end child: widgets/child.md
