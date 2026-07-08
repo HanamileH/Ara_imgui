@@ -13,3 +13,8 @@ nav:
       - Separator: widgets/separator.md
       - Input Float: widgets/input_float.md
       - Input Int: widgets/input_int.md
+      - Text colored: widgets/text_colored.md
+      - Text disabled: widgets/text_disabled.md
+      - Text wrapped: widgets/text_wrapped.md
+      - Text link: widgets/text_link.md
+      - Text link open url: widgets/text_link_open_url.md
