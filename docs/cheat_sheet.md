@@ -26,6 +26,9 @@ This page provides a brief overview of the main widgets available in the Ara_img
 |--------|-------------|
 | [imgui.input_int](widgets/input_int.md) | Creates an input field for entering an integer value. |
 | [imgui.input_float](widgets/input_float.md) | Creates an input field for entering a floating-point number. |
+| [imgui.input_text](widgets/input_text.md) | Creates an input field for entering a text string. |
+| [imgui.input_text_multiline](widgets/input_text_multiline.md) | Creates an input field for entering a multiline text string. |
+| [imgui.combo](widgets/combo.md) | Creates a dropdown menu for selecting an option from a list. |
 
 ### Structuring
 

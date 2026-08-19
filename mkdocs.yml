@@ -13,6 +13,9 @@ nav:
       - Separator: widgets/separator.md
       - Input Float: widgets/input_float.md
       - Input Int: widgets/input_int.md
+      - Input text: widgets/input_text.md
+      - Input text multiline: widgets/input_text_multiline.md
+      - Combo box: widgets/combo.md
       - Text colored: widgets/text_colored.md
       - Text disabled: widgets/text_disabled.md
       - Text wrapped: widgets/text_wrapped.md
