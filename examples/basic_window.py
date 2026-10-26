@@ -7,12 +7,12 @@ def gui():
    global name
    imgui.text("Example of a basic window")
 
-   changed, name = imgui.input_text("Enter your name", name)
+   name = imgui.input_text("Enter your name", name)
 
-   if changed:
+   if imgui.is_item_changed():
       print(f"Input text: {name}")
 
-   imgui.text(f"Hello, {name if name else "Unknown"}!")
+   imgui.text(f"Hello, {name if name else 'Unknown'}!")
 
 
 app.run(gui)

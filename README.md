@@ -7,6 +7,7 @@
 - Simple ImGui app launch with a single `run` function
 - Support various themes
 - System or custom font loading, including Cyrillic support
+- Value widgets return the new value directly; use `imgui.is_item_changed()` to react to edits
 - Ready-to-run examples included in the `examples` folder
 
 ## Installation
@@ -38,6 +39,35 @@ def gui():
 
 app.run(gui)
 ```
+
+### Stateful widgets
+
+Value widgets such as `input_text`, `combo`, `slider_float` and `color_edit3`
+return the new value directly. To know whether the user changed it, call
+`imgui.is_item_changed()` right after the widget:
+
+```python
+from ara_imgui import App, imgui
+
+app = App("Widget example")
+
+name = "Michail"
+option = 0
+
+def gui():
+    global name, option
+
+    name = imgui.input_text("Name", name)
+    if imgui.is_item_changed():
+        print(f"Name changed to {name}")
+
+    option = imgui.combo("Option", option, ["One", "Two", "Three"])
+
+app.run(gui)
+```
+
+Widgets that do not report a changed flag (buttons, tree nodes, layout helpers)
+keep their usual ImGui return value.
 
 ### Custom fonts and themes
 

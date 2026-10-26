@@ -42,9 +42,9 @@ def gui():
     imgui.separator()
     
     # Checkbox
-    changed, checkboxs[0] = imgui.checkbox("Checkbox 1", checkboxs[0])
-    changed, checkboxs[1] = imgui.checkbox("Checkbox 2", checkboxs[1])
-    changed, checkboxs[2] = imgui.checkbox("Checkbox 3", checkboxs[2])
+    checkboxs[0] = imgui.checkbox("Checkbox 1", checkboxs[0])
+    checkboxs[1] = imgui.checkbox("Checkbox 2", checkboxs[1])
+    checkboxs[2] = imgui.checkbox("Checkbox 3", checkboxs[2])
 
     imgui.separator()
     
@@ -64,21 +64,25 @@ def gui():
     imgui.separator()
     
     # Text input
-    changed, text_input = imgui.input_text("Text Input", text_input)
+    # Widgets return the new value; is_item_changed() reports the edit flag.
+    text_input = imgui.input_text("Text Input", text_input)
+
+    if imgui.is_item_changed():
+        print("Text input changed")
     
-    imgui.text(f"Hello, {text_input if text_input else "unknown"}!")
+    imgui.text(f"Hello, {text_input if text_input else 'unknown'}!")
     
     imgui.separator()
     
     # Number input
-    changed, int_val = imgui.input_int("Int input", int_val)
-    changed, float_val = imgui.input_float("Float input", float_val)
+    int_val = imgui.input_int("Int input", int_val)
+    float_val = imgui.input_float("Float input", float_val)
     
     imgui.separator()
     
     # Sliders
-    changed, int_val = imgui.slider_int("Slider int", int_val, 0, 100)
-    changed, float_val = imgui.slider_float("Slider float", float_val, 0.0, 1.0)
+    int_val = imgui.slider_int("Slider int", int_val, 0, 100)
+    float_val = imgui.slider_float("Slider float", float_val, 0.0, 1.0)
     
     imgui.separator()
     
@@ -89,14 +93,14 @@ def gui():
     imgui.separator()
     
     # Combo box
-    changed, combo_selected = imgui.combo("Combo", combo_selected, ["Option 1", "Option 2", "Option 3"])
+    combo_selected = imgui.combo("Combo", combo_selected, ["Option 1", "Option 2", "Option 3"])
     
     imgui.text(f"Selected option: {combo_selected}")
     
     imgui.separator()
     
     # Color picker
-    changed, color = imgui.color_edit3("Color picker", color)
+    color = imgui.color_edit3("Color picker", color)
     
     imgui.separator()
     
@@ -104,11 +108,11 @@ def gui():
     if imgui.begin_child("Child", size=imgui.ImVec2(0, 70)):
         imgui.text("This is a child")
         imgui.text("Hello, world!")
-        
+
         for i in range(10):
             imgui.text(f"Child text {i}")
-        
-        imgui.end_child()
+
+    imgui.end_child()
         
     imgui.separator()
     

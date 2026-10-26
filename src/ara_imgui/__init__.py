@@ -1,4 +1,4 @@
-from imgui_bundle import imgui
+from ._imgui import imgui
 from .app import App
 from .window import Window
 
