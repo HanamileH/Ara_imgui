@@ -70,6 +70,14 @@ app.run(gui)
 Widgets that do not report a changed flag (buttons, tree nodes, layout helpers)
 keep their usual ImGui return value.
 
+### IDE support
+
+`ara_imgui.imgui` ships type hints (`imgui.pyi` and a `py.typed` marker), so
+VS Code / Pylance shows the same parameter names and return types as
+`imgui_bundle`, adjusted for the value-only returns, `is_item_changed()` and
+the context managers. `imgui.raw` is typed as the untouched
+`imgui_bundle.imgui` module.
+
 ### Context managers
 
 `imgui.child()`, `imgui.table()` and `imgui.tree()` can be used as context

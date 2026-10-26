@@ -5,6 +5,11 @@ a fake module, and the curated widget list is checked against the real
 binding that is installed.
 """
 
+import ast
+import types
+from pathlib import Path
+
+import ara_imgui
 from imgui_bundle import imgui as raw_imgui
 
 from ara_imgui import imgui
@@ -121,3 +126,40 @@ def test_public_imgui_has_is_item_changed():
 def test_proxy_caches_wrapped_functions():
     proxy = ImguiProxy(_FakeImgui())
     assert proxy.input_text is proxy.input_text
+
+
+def test_public_imgui_is_a_real_module():
+    assert isinstance(imgui, types.ModuleType)
+    assert imgui.__name__ == "ara_imgui.imgui"
+    assert imgui.raw is raw_imgui
+    assert imgui.get_io is raw_imgui.get_io
+
+
+def test_type_stub_is_shipped_and_declares_the_public_api():
+    package = Path(ara_imgui.__file__).parent
+    assert (package / "py.typed").is_file()
+
+    stub_path = package / "imgui.pyi"
+    assert stub_path.is_file()
+
+    stub = ast.parse(stub_path.read_text(encoding="utf-8"))
+    functions = {
+        node.name for node in stub.body if isinstance(node, ast.FunctionDef)
+    }
+    assert set(CHANGED_WIDGETS) <= functions
+    assert {"child", "table", "tree", "is_item_changed"} <= functions
+
+
+def test_type_stub_does_not_return_changed_flags():
+    stub_path = Path(ara_imgui.__file__).with_name("imgui.pyi")
+    stub = ast.parse(stub_path.read_text(encoding="utf-8"))
+
+    for node in stub.body:
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        if node.name not in CHANGED_WIDGETS:
+            continue
+
+        annotation = ast.unparse(node.returns)
+        assert not annotation.startswith("Tuple[bool"), (node.name, annotation)
+
