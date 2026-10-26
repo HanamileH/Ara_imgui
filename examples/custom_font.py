@@ -1,4 +1,4 @@
-from ara_imgui import App, imgui
+from ara_imgui import App, imgui, themes
 
 font_path = R"C:\Windows\Fonts\Arial.ttf"
 
@@ -21,6 +21,6 @@ def gui():
    imgui.text("cillum dolore eu fugiat nulla pariatur.")
 
 
-app.apply_theme("light")
+app.apply_theme(themes.light)
 app.load_font(font_path, font_size=20)
 app.run(gui)

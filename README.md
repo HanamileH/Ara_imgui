@@ -72,12 +72,12 @@ keep their usual ImGui return value.
 ### Custom fonts and themes
 
 ```python
-from ara_imgui import App, imgui
+from ara_imgui import App, imgui, themes
 
 font_path = R"C:\Windows\Fonts\Arial.ttf"
 
 app = App("Font Example")
-app.apply_theme("cherry")
+app.apply_theme(themes.cherry)
 app.load_font(font_path, font_size=20)
 
 def gui():
@@ -85,6 +85,24 @@ def gui():
 
 app.run(gui)
 ```
+
+### Themes
+
+`themes` is an enum (`themes = Theme`), so `themes.dark`, `themes.light`,
+`themes.cherry` and so on can be passed to `app.apply_theme()`. The plain name
+string still works as well: `app.apply_theme("dark")`.
+
+Available themes:
+
+`dark`, `light`, `classic`, `material_flat`, `photoshop_style`,
+`gray_variations`, `gray_variations_darker`, `microsoft_style`, `cherry`,
+`darcula`, `darcula_darker`, `light_rounded`, `so_dark_accent_blue`,
+`so_dark_accent_yellow`, `so_dark_accent_red`, `black_is_black`,
+`white_is_white`.
+
+Some of them map to differently named internal `imgui_bundle` themes (for
+example `themes.dark` uses `hello_imgui.ImGuiTheme_.imgui_colors_dark`); the
+mapping is handled for you.
 
 ## Examples
 
