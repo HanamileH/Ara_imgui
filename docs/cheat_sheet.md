@@ -35,4 +35,4 @@ This page provides a brief overview of the main widgets available in the Ara_img
 | Widget | Description |
 |--------|-------------|
 | [imgui.separator](widgets/separator.md) | Creates a horizontal separator line. |
-| [imgui.begin_child](widgets/child.md) | Creates a child window or a scrollable region. |
+| [imgui.child](widgets/child.md) | Creates a child window or a scrollable region. |

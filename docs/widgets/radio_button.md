@@ -16,7 +16,7 @@ pressed = imgui.radio_button(label, selected)
 
 ## Usage example
 ```python
-import imgui
+from ara_imgui import App, imgui
 
 radio_first = 0
 radio_second = 1
@@ -38,4 +38,7 @@ def gui():
 
     if imgui.radio_button("Option 3", radio_second == 2):
         radio_second = 2
+
+app = App()
+app.run(gui)
 ```

@@ -15,9 +15,12 @@ imgui.text_wrapped(text)
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
     imgui.text_wrapped("This text will automatically wrap to the next line when it reaches the edge of the window.")
     imgui.text_wrapped("Long paragraphs or descriptions are ideal for this widget as they will adapt to the window size.")
+
+app = App()
+app.run(gui)
 ```

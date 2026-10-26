@@ -16,7 +16,7 @@ imgui.text_colored(color, text)
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
     # Red text
@@ -27,4 +27,7 @@ def gui():
 
     # Dark gray text
     imgui.text_colored(imgui.ImVec4(0.2, 0.2, 0.2, 1.0), "Adios, mundo!")
+
+app = App()
+app.run(gui)
 ```

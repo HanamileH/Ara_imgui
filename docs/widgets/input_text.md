@@ -4,7 +4,7 @@ Displays an input field for text
 
 ## Syntax
 ```py
-changed, text = imgui.input_text(label, text, flags)
+text = imgui.input_text(label, text, flags)
 ```
 
 ## Parameters
@@ -14,20 +14,19 @@ changed, text = imgui.input_text(label, text, flags)
 
 ## Return
 - **text** – (str) The updated text value after user input.
-- **changed** – (bool) Returns `True` if the value was changed by the user, otherwise returns `False`.
 
 ## Usage example
 ```python
-import imgui
+from ara_imgui import App, imgui
 
-desc = ""
+name = ""
 
 def gui():
-    global desc
+    global name
 
-    update, desc = imgui.input_text_multiline("Description", desc, imgui.ImVec2(200, 50))
+    name = imgui.input_text("Your name", name)
+    imgui.text(f"Hello, {name or 'unknown'}!")
 
-    if update:
-        print("Updated!")
-        print(desc)
+app = App()
+app.run(gui)
 ```

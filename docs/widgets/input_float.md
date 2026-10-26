@@ -4,7 +4,7 @@ Displays an input field for floating-point values. Allows the user to input and 
 
 ## Syntax
 ```py
-value, changed = imgui.input_float(label, value, step, step_fast, format, flags)
+value = imgui.input_float(label, value, step, step_fast, format, flags)
 ```
 
 ## Parameters
@@ -17,21 +17,19 @@ value, changed = imgui.input_float(label, value, step, step_fast, format, flags)
 
 ## Return
 - **value** – (float) The updated float value after user input.
-- **changed** – (bool) Returns `True` if the value was changed by the user, otherwise returns `False`.
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 value = 0.0
 
 def gui():
     global value
 
-    value, changed = imgui.input_float("Input Float", value, step=0.1, step_fast=1.0, format="%.2f")
-
-    if changed:
-        print(f"Value changed to: {value}")
-
+    value = imgui.input_float("Input Float", value, step=0.1, step_fast=1.0, format="%.2f")
     imgui.text(f"Current value: {value}")
+
+app = App()
+app.run(gui)
 ```

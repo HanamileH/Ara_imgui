@@ -16,7 +16,7 @@ pressed = imgui.button(text, size)
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
     if imgui.button("Click me!"):
@@ -24,4 +24,7 @@ def gui():
 
     if imgui.button("Custom size button", imgui.ImVec2(200, 50)):
         print("Second button clicked!")
+
+app = App()
+app.run(gui)
 ```

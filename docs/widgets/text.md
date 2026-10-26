@@ -15,7 +15,7 @@ imgui.text(label)
 
 ## Usage example
 ```python
-import imgui
+from ara_imgui import App, imgui
 
 pi = 3.14159265
 
@@ -23,4 +23,7 @@ def gui():
     imgui.text("Hello, world!")
     imgui.text(str(123))
     imgui.text(f"pi = {pi:.2f}")
+
+app = App()
+app.run(gui)
 ```

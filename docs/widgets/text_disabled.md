@@ -15,10 +15,13 @@ imgui.text_disabled(text)
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
     imgui.text("Option A")
     imgui.text("Option B")
     imgui.text_disabled("Option C (disabled)")
+
+app = App()
+app.run(gui)
 ```

@@ -16,10 +16,13 @@ imgui.text_link_open_url(text, url)
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
     imgui.text_link_open_url("Open google", "https://www.google.com")
     imgui.text_link_open_url("Visit GitHub", "https://github.com")
     imgui.text_link_open_url("Documentation", "https://docs.example.com")
+
+app = App()
+app.run(gui)
 ```

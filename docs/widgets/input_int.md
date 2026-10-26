@@ -4,7 +4,7 @@ Displays an input field for integer values. Allows the user to input and modify 
 
 ## Syntax
 ```py
-value, changed = imgui.input_int(label, value, step, step_fast, flags)
+value = imgui.input_int(label, value, step, step_fast, flags)
 ```
 
 ## Parameters
@@ -16,20 +16,19 @@ value, changed = imgui.input_int(label, value, step, step_fast, flags)
 
 ## Return
 - **value** – (int) The updated integer value after user input.
-- **changed** – (bool) Returns `True` if the value was changed by the user, otherwise returns `False`.
 
 ## Usage example
 ```python
-import imgui
+from ara_imgui import App, imgui
 
 age = 0
 
 def gui():
     global age
 
-    age, changed = imgui.input_int("Age", age)
+    age = imgui.input_int("Age", age)
 
-    if changed:
+    if imgui.is_item_changed():
         print(f"Age changed to: {age}")
 
         # We can change the values ​​manually to set the range of acceptable values
@@ -37,4 +36,7 @@ def gui():
             age = 0
     
     imgui.text(f"Current age: {age}")
+
+app = App()
+app.run(gui)
 ```

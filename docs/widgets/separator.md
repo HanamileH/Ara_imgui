@@ -15,7 +15,7 @@ imgui.separator()
 
 ## Usage example
 ```python
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
     imgui.text("First group")
@@ -33,8 +33,11 @@ def gui():
     imgui.separator()
 
     for i in range(15):
-            imgui.text(f"Item {i}")
-            imgui.next_column()
+        imgui.text(f"Item {i}")
+        imgui.next_column()
 
     imgui.columns(1)
+
+app = App()
+app.run(gui)
 ```

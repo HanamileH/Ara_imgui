@@ -1,8 +1,17 @@
-# imgui.begin_child and imgui.end_child
+# imgui.child, imgui.begin_child and imgui.end_child
 ## Description
 Begins a child window region that can be independently scrolled and clipped.
 
 ## Syntax
+```py
+with imgui.child(child_id, size, child_flags, window_flags) as child:
+    if child:
+        # Child items
+        # ...
+```
+
+Or:
+
 ```py
 if imgui.begin_child(child_id, size, child_flags, window_flags):
     # Child items
@@ -18,10 +27,10 @@ if imgui.begin_child(child_id, size, child_flags, window_flags):
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
-    if imgui.begin_child("Child Window", imgui.Vec2(400, 200)):
+    if imgui.begin_child("Child Window", imgui.ImVec2(400, 200)):
         for _ in range(100):
             imgui.text("Too many lines")
 
@@ -29,7 +38,10 @@ def gui():
 
     imgui.separator()
 
-    if imgui.begin_child("Child Window 2"):
-        imgui.text("This is another child window")
-        imgui.end_child()
+    with imgui.child("Child Window 2") as child:
+        if child:
+            imgui.text("This is another child window")
+
+app = App()
+app.run(gui)
 ```

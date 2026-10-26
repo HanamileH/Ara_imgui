@@ -15,9 +15,12 @@ clicked = imgui.text_link(text)
 
 ## Usage example
 ```py
-import imgui
+from ara_imgui import App, imgui
 
 def gui():
     if imgui.text_link("Click here to visit our website"):
         print("Hyperlink clicked!")
+
+app = App()
+app.run(gui)
 ```
