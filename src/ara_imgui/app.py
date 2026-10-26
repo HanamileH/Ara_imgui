@@ -8,22 +8,35 @@ from imgui_bundle import imgui, immapp, hello_imgui
 from .theme import IMGUI_THEMES, Theme
 
 class App:
-    def __init__(self, title="New app", width=800, height=600):
+    def __init__(
+            self,
+            title="New app",
+            width=800,
+            height=600,
+            theme=Theme.dark,
+            font_path=None, # None for default font
+            font_size=18
+        ):
         """Initialize the application.
         
         Args:
             title (str): Window title.
             width (int): Window width.
             height (int): Window height.
+            theme (Theme | str): A theme from :class:`ara_imgui.Theme`
+                (also available as ``ara_imgui.themes``) or its name as a
+                string, for example ``themes.cherry`` or ``"cherry"``.
+            font_path (str, optional): The path to the font file. Defaults to None, which loads the default font.
+            font_size (int, optional): The size of the font. Defaults to 18.
         """
         self.title = title
         self.width = width
         self.height = height
 
-        self.font_path = None # None for default font
-        self.font_size = 18
+        self.font_path = font_path
+        self.font_size = font_size
 
-        self.theme = Theme.dark
+        self.theme = theme
         self._update_theme = True
    
     

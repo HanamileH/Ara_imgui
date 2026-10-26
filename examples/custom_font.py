@@ -2,7 +2,7 @@ from ara_imgui import App, imgui, themes
 
 font_path = R"C:\Windows\Fonts\Arial.ttf"
 
-app = App("Custom font example")
+app = App("Custom font example", theme=themes.light)
 
 def gui():
    imgui.text("Latin characters:")
@@ -21,6 +21,5 @@ def gui():
    imgui.text("cillum dolore eu fugiat nulla pariatur.")
 
 
-app.apply_theme(themes.light)
 app.load_font(font_path, font_size=20)
 app.run(gui)
