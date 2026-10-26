@@ -1,45 +1,42 @@
 import os
 import sys
 from pathlib import Path
+from typing import Union
+
 from imgui_bundle import imgui, immapp, hello_imgui
 
-IMGUI_THEMES = {
-    "dark": hello_imgui.ImGuiTheme_.imgui_colors_dark,
-    "light": hello_imgui.ImGuiTheme_.imgui_colors_light,
-    "classic": hello_imgui.ImGuiTheme_.imgui_colors_classic,
-    "material_flat": hello_imgui.ImGuiTheme_.material_flat,
-    "photoshop_style": hello_imgui.ImGuiTheme_.photoshop_style,
-    "gray_variations": hello_imgui.ImGuiTheme_.gray_variations,
-    "gray_variations_darker": hello_imgui.ImGuiTheme_.gray_variations_darker,
-    "microsoft_style": hello_imgui.ImGuiTheme_.microsoft_style,
-    "cherry": hello_imgui.ImGuiTheme_.cherry,
-    "darcula": hello_imgui.ImGuiTheme_.darcula,
-    "darcula_darker": hello_imgui.ImGuiTheme_.darcula_darker,
-    "light_rounded": hello_imgui.ImGuiTheme_.light_rounded,
-    "so_dark_accent_blue": hello_imgui.ImGuiTheme_.so_dark_accent_blue,
-    "so_dark_accent_yellow": hello_imgui.ImGuiTheme_.so_dark_accent_yellow,
-    "so_dark_accent_red": hello_imgui.ImGuiTheme_.so_dark_accent_red,
-    "black_is_black": hello_imgui.ImGuiTheme_.black_is_black,
-    "white_is_white": hello_imgui.ImGuiTheme_.white_is_white
-}
+from .theme import IMGUI_THEMES, Theme
 
 class App:
-    def __init__(self, title="New app", width=800, height=600):
+    def __init__(
+            self,
+            title="New app",
+            width=800,
+            height=600,
+            theme=Theme.dark,
+            font_path=None, # None for default font
+            font_size=18
+        ):
         """Initialize the application.
         
         Args:
             title (str): Window title.
             width (int): Window width.
             height (int): Window height.
+            theme (Theme | str): A theme from :class:`ara_imgui.Theme`
+                (also available as ``ara_imgui.themes``) or its name as a
+                string, for example ``themes.cherry`` or ``"cherry"``.
+            font_path (str, optional): The path to the font file. Defaults to None, which loads the default font.
+            font_size (int, optional): The size of the font. Defaults to 18.
         """
         self.title = title
         self.width = width
         self.height = height
 
-        self.font_path = None # None for default font
-        self.font_size = 18
+        self.font_path = font_path
+        self.font_size = font_size
 
-        self.theme = "dark"
+        self.theme = theme
         self._update_theme = True
    
     
@@ -79,40 +76,34 @@ class App:
         self.font_path = None
         self.font_size = 18
 
-    def apply_theme(self, name: str):
+    def apply_theme(self, theme: Union[Theme, str]):
         """
         Applies a theme to the application.
 
         Args:
-            name (str): The name of the theme
-            Available themes:
-                - dark
-                - light
-                - classic
-                - material_flat
-                - photoshop_style
-                - gray_variations
-                - gray_variations_darker
-                - microsoft_style
-                - cherry
-                - darcula
-                - darcula_darker
-                - light_rounded
-                - so_dark_accent_blue
-                - so_dark_accent_yellow
-                - so_dark_accent_red
-                - black_is_black
-                - white_is_white
+            theme (Theme | str): A theme from :class:`ara_imgui.Theme`
+                (also available as ``ara_imgui.themes``) or its name as a
+                string, for example ``themes.cherry`` or ``"cherry"``.
 
         Raises:
-            ValueError: If the theme name is not found
+            ValueError: If the theme name is not known.
+            TypeError: If ``theme`` is neither a ``Theme`` nor a string.
         """
 
-        if name in IMGUI_THEMES:
-            self.theme = name
-            self._update_theme = True
+        if isinstance(theme, Theme):
+            selected = theme
+        elif isinstance(theme, str):
+            try:
+                selected = Theme(theme)
+            except ValueError:
+                raise ValueError(f"Theme '{theme}' not found") from None
         else:
-            raise ValueError(f"Theme '{name}' not found")
+            raise TypeError(
+                f"Theme must be a Theme or str, not {type(theme).__name__}"
+            )
+
+        self.theme = selected
+        self._update_theme = True
 
 
     def run(self, render=None, update=None, terminate=None):
@@ -139,9 +130,8 @@ class App:
         # Custom rendering callback
         def _render():
             if self._update_theme:
-                hello_imgui.apply_theme(
-                    IMGUI_THEMES[self.theme]
-                )
+                hello_imgui.apply_theme(IMGUI_THEMES[self.theme])
+                self._update_theme = False
 
             # Update callback
             if update is not None:
