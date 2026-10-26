@@ -70,6 +70,30 @@ app.run(gui)
 Widgets that do not report a changed flag (buttons, tree nodes, layout helpers)
 keep their usual ImGui return value.
 
+### Flag enums
+
+Flag enums live in `ara_imgui.flags` and are grouped by the widget or feature
+they belong to:
+
+```python
+from ara_imgui import flags
+
+input_flags = (
+    flags.input_text.chars_no_blank
+    | flags.input_text.password
+)
+password = imgui.input_text("Enter your password", password, flags=input_flags)
+```
+
+Available groups: `backend`, `button`, `child`, `color_edit`, `combo`,
+`config`, `dock_node`, `drag_drop`, `draw`, `draw_list`, `focused`, `font`,
+`font_atlas`, `hovered`, `input`, `input_text`, `item`, `list_clipper`,
+`multi_select`, `popup`, `selectable`, `slider`, `tab_bar`, `tab_item`,
+`table`, `table_column`, `table_row`, `tree_node`, `viewport`, `window`.
+
+Each group is the same enum class as `imgui_bundle`'s `*Flags_`, so the raw
+spellings (`imgui.InputTextFlags_`) keep working too.
+
 ### IDE support
 
 `ara_imgui.imgui` ships type hints (`imgui.pyi` and a `py.typed` marker), so
@@ -169,6 +193,7 @@ See the [`examples/`](./examples) folder:
 * `custom_font.py` — Font and multilingual text rendering.
 * `widget_examples.py` — Most of the common widgets.
 * `table_example.py` — Table with headers built with `imgui.table()`.
+* `flags_example.py` — A compact tour of the `ara_imgui.flags` groups.
 
 ## Dependencies
 
