@@ -104,6 +104,137 @@ def _wrap_changed(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
+class _ChildContext:
+    """``with imgui.child(...):`` -- wraps ``begin_child`` / ``end_child``.
+
+    The object is truthy while the child is visible, so the body can be
+    guarded with ``if child:`` when it is expensive to submit.
+    """
+
+    __slots__ = ("_module", "_args", "_kwargs", "visible")
+
+    def __init__(self, module: Any, *args: Any, **kwargs: Any) -> None:
+        self._module = module
+        self._args = args
+        self._kwargs = kwargs
+        self.visible = False
+
+    def __enter__(self) -> _ChildContext:
+        self.visible = self._module.begin_child(*self._args, **self._kwargs)
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> bool:
+        # EndChild() must always be called, even when BeginChild() returned
+        # False (the child window is still pushed on the stack).
+        self._module.end_child()
+        return False
+
+    def __bool__(self) -> bool:
+        return bool(self.visible)
+
+    def __repr__(self) -> str:
+        return f"<imgui.child visible={self.visible}>"
+
+
+class _TableContext:
+    """``with imgui.table(...):`` -- legacy ImGui columns as a table.
+
+    Wraps ``imgui.columns(..., borders)`` and the matching
+    ``imgui.columns(1)``.  Headers are rendered as the first row.  Cells are
+    submitted with ``imgui.next_column()``; the legacy API wraps to a new line
+    after the last column, so rows need no explicit call.
+    """
+
+    __slots__ = ("_module", "_label", "_columns", "_headers", "_borders")
+
+    def __init__(
+        self,
+        module: Any,
+        label: str,
+        columns: Any = None,
+        headers: Any = None,
+        borders: bool = True,
+    ) -> None:
+        if columns is None and headers is None:
+            raise ValueError("Either columns or headers must be specified")
+
+        if columns is None:
+            columns = len(headers)
+
+        if columns <= 0:
+            raise ValueError("columns must be greater than zero")
+
+        if headers is not None and len(headers) > columns:
+            raise ValueError("Headers must be equal to or less than columns")
+
+        self._module = module
+        self._label = label
+        self._columns = columns
+        self._headers = list(headers) if headers is not None else None
+        self._borders = borders
+
+    def __enter__(self) -> _TableContext:
+        module = self._module
+        module.columns(self._columns, self._label, self._borders)
+
+        if self._headers:
+            for header in self._headers:
+                module.text(header)
+                module.next_column()
+
+            for _ in range(self._columns - len(self._headers)):
+                module.next_column()
+
+            module.separator()
+
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> bool:
+        # EndColumns() asserts when no columns are open; Columns(1) is the
+        # safe, idempotent way to close the legacy columns set.
+        self._module.columns(1)
+        return False
+
+    def __repr__(self) -> str:
+        return f"<imgui.table columns={self._columns}>"
+
+
+class _TreeContext:
+    """``with imgui.tree(...):`` -- wraps ``tree_node`` / ``tree_pop``.
+
+    ``TreePop()`` is only called when the node is open, and the object is
+    truthy exactly in that case.  A collapsed node must not draw its content,
+    so guard the body with ``if node:``::
+
+        with imgui.tree("Settings") as node:
+            if node:
+                imgui.text("Advanced options")
+    """
+
+    __slots__ = ("_module", "_args", "_kwargs", "expanded")
+
+    def __init__(self, module: Any, *args: Any, **kwargs: Any) -> None:
+        self._module = module
+        self._args = args
+        self._kwargs = kwargs
+        self.expanded = False
+
+    def __enter__(self) -> _TreeContext:
+        self.expanded = self._module.tree_node(*self._args, **self._kwargs)
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> bool:
+        if self.expanded:
+            self._module.tree_pop()
+        return False
+
+    def __bool__(self) -> bool:
+        return bool(self.expanded)
+
+    def __repr__(self) -> str:
+        return f"<imgui.tree expanded={self.expanded}>"
+
+
 class ImguiProxy:
     """Module-like proxy that wraps the value widgets of ``imgui_bundle.imgui``.
 
@@ -138,6 +269,53 @@ class ImguiProxy:
         cache[name] = value
         return value
 
+    def child(self, *args: Any, **kwargs: Any) -> _ChildContext:
+        """Context manager around ``begin_child`` / ``end_child``::
+
+            with imgui.child("Log", size=imgui.ImVec2(0, 120)):
+                imgui.text("Child content")
+        """
+        return _ChildContext(self._module, *args, **kwargs)
+
+    def tree(self, *args: Any, **kwargs: Any) -> _TreeContext:
+        """Context manager around ``tree_node`` / ``tree_pop``::
+
+            with imgui.tree("Settings") as node:
+                if node:
+                    imgui.text("Advanced options")
+        """
+        return _TreeContext(self._module, *args, **kwargs)
+
+    def table(
+        self,
+        label: str,
+        columns: Any = None,
+        headers: Any = None,
+        borders: bool = True,
+    ) -> _TableContext:
+        """Context manager around the legacy ``columns`` API.
+
+        ``columns`` defaults to the number of ``headers``.  When ``headers``
+        is given, they are rendered as the first row.  Cells are submitted
+        with ``imgui.next_column()``; the legacy API wraps to a new line after
+        the last column, so no explicit row call is needed::
+
+            with imgui.table("People", 3, ["Name", "Age", "Sex"]):
+                for name, age, sex in people:
+                    imgui.text(name)
+                    imgui.next_column()
+                    imgui.text(str(age))
+                    imgui.next_column()
+                    imgui.text(sex)
+                    imgui.next_column()
+
+        Positional arguments follow the ``label, columns, headers, borders``
+        order.
+        """
+        return _TableContext(
+            self._module, label, columns, headers, borders
+        )
+
     def is_item_changed(self) -> bool:
         """``True`` when the last submitted widget changed its value.
 
@@ -156,7 +334,10 @@ class ImguiProxy:
 
     def __dir__(self) -> list:
         module = object.__getattribute__(self, "_module")
-        return sorted(set(dir(module)) | {"is_item_changed", "raw"})
+        return sorted(
+            set(dir(module))
+            | {"child", "is_item_changed", "raw", "table", "tree"}
+        )
 
     def __repr__(self) -> str:
         module = object.__getattribute__(self, "_module")

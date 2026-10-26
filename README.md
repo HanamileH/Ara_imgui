@@ -8,6 +8,7 @@
 - Support various themes
 - System or custom font loading, including Cyrillic support
 - Value widgets return the new value directly; use `imgui.is_item_changed()` to react to edits
+- Context managers for child regions, tables and tree nodes
 - Ready-to-run examples included in the `examples` folder
 
 ## Installation
@@ -69,6 +70,53 @@ app.run(gui)
 Widgets that do not report a changed flag (buttons, tree nodes, layout helpers)
 keep their usual ImGui return value.
 
+### Context managers
+
+`imgui.child()`, `imgui.table()` and `imgui.tree()` can be used as context
+managers, so the matching `end_child()` / `columns(1)` / `tree_pop()` call is
+made for you:
+
+```python
+with imgui.child("Log", size=imgui.ImVec2(0, 120)):
+    imgui.text("Child content")
+```
+
+`imgui.table()` wraps the legacy `imgui.columns()` API. Columns are set up for
+you, and when `headers` is given they are rendered as the first row. Cells are
+submitted with `imgui.next_column()`, which automatically wraps to a new line
+after the last column:
+
+```python
+with imgui.table("People", 3, ["Name", "Age", "Sex"]):
+    for name, age, sex in people:
+        imgui.text(name)
+        imgui.next_column()
+
+        imgui.text(str(age))
+        imgui.next_column()
+        
+        imgui.text(sex)
+        imgui.next_column()
+```
+
+`columns` may be omitted when `headers` is given
+(`imgui.table("People", headers=[...])`). Borders are enabled by default; pass
+`borders=False` to disable them. If you need the modern table API instead
+(sorting, resizing, scrolling), use `imgui.begin_table()` / `imgui.end_table()`
+directly.
+
+A collapsed tree node must not draw its content, so guard the body. The context
+manager is truthy only while the node is open:
+
+```python
+with imgui.tree("Settings") as node:
+    if node:
+        imgui.text("Advanced options")
+```
+
+`imgui.child()` is truthy while visible as well, so the same guard can be used
+around expensive content.
+
 ### Custom fonts and themes
 
 ```python
@@ -111,7 +159,8 @@ See the [`examples/`](./examples) folder:
 * `hello_world.py` — Basic "Hello, world!" with a button.
 * `basic_window.py` — Simple window with input field.
 * `custom_font.py` — Font and multilingual text rendering.
-* `multiple_window.py` — GUI with multiple ImGui windows.
+* `widget_examples.py` — Most of the common widgets.
+* `table_example.py` — Table with headers built with `imgui.table()`.
 
 ## Dependencies
 

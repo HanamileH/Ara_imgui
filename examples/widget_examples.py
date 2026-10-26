@@ -105,45 +105,41 @@ def gui():
     imgui.separator()
     
     # Child
-    if imgui.begin_child("Child", size=imgui.ImVec2(0, 70)):
+    with imgui.child("Child", size=imgui.ImVec2(0, 70)):
         imgui.text("This is a child")
         imgui.text("Hello, world!")
 
         for i in range(10):
             imgui.text(f"Child text {i}")
-
-    imgui.end_child()
         
     imgui.separator()
     
     # Tree Node
-    if imgui.tree_node("Tree node 1"):
-        imgui.button("Child 1")
-        
-        if imgui.tree_node("Child 2"):
-            imgui.button("Child 2")
-            imgui.button("Child 3")
-            imgui.tree_pop()
-        
-        if imgui.tree_node("Child 3"):
-            imgui.button("Child 4")
-            imgui.button("Child 5")
-            imgui.button("Child 6")
-            imgui.tree_pop()
+    with imgui.tree("Tree node 1") as node:
+        if node:
+            imgui.button("Child 1")
 
-        imgui.tree_pop()
+            with imgui.tree("Child 2") as child:
+                if child:
+                    imgui.button("Child 2")
+                    imgui.button("Child 3")
+
+            with imgui.tree("Child 3") as child:
+                if child:
+                    imgui.button("Child 4")
+                    imgui.button("Child 5")
+                    imgui.button("Child 6")
 
     imgui.separator()
     
     # Table
-    imgui.columns(5, "##table columns", borders=True)
-    
-    for i in range(4):
-        for j in range(5):
-            imgui.text(f"item {i} {j}")
-            imgui.next_column()
-            
-    imgui.columns(1)
+    with imgui.table("##table columns", 5):
+        # Rows
+        for i in range(4):
+            # Columns
+            for j in range(5):
+                imgui.text(f"item {i} {j}")
+                imgui.next_column()
 
 
 app.run(gui)
