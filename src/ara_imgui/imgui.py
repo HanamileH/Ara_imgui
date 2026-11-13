@@ -5,6 +5,11 @@ re-exported unchanged, then the parts Ara_imgui customizes are overridden:
 
 - value widgets return the new value instead of ``(changed, value)``; read the
   flag with :func:`is_item_changed`;
+- the value argument of a value widget may be omitted or passed as ``None``:
+  the widget remembers the value it returned on the previous frame (keyed by
+  the label ID) and reuses it; ``default=`` sets the value for the first
+  frame, and an explicitly passed value overwrites the remembered one;
+- :func:`set_item_value` explicitly changes a remembered value by widget ID;
 - :func:`child`, :func:`table` and :func:`tree` are context managers;
 - :data:`raw` points at the untouched ``imgui_bundle.imgui`` module.
 
@@ -25,4 +30,5 @@ child = _proxy.child
 table = _proxy.table
 tree = _proxy.tree
 is_item_changed = _proxy.is_item_changed
+set_item_value = _proxy.set_item_value
 raw = _proxy.raw

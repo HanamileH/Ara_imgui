@@ -72,6 +72,36 @@ app.run(gui)
 Widgets that do not report a changed flag (buttons, tree nodes, layout helper elements)
 keep the usual ImGui return value.
 
+The value can also be omitted (or passed as `None`). In that case the widget
+reuses the value it returned on the previous frame. Values are remembered by
+the widget ID — the part of the label after `##` — so the same widget keeps
+its state across frames. Use `default=` to set the value for the first frame:
+
+```python
+def gui():
+    name = imgui.input_text("Name")
+    age = imgui.input_int("Age##input_id", default=18)
+    option = imgui.combo("Option", items=["One", "Two", "Three"])
+```
+
+Passing a value explicitly overwrites the remembered one, so both styles can
+be mixed. For example, a button can reset a widget:
+
+```python
+new_age = 18 if imgui.button("Reset age") else None
+age = imgui.input_int("Age##input_id", new_age, default=18)
+```
+
+The remembered value can also be changed explicitly with `set_item_value()`.
+It accepts either the widget ID (the part after `##`) or the whole label:
+
+```python
+imgui.set_item_value("Age##input_id", 18)
+```
+
+Passing `None` forgets the remembered value, so the widget falls back to its
+`default=` or zero value on the next frame.
+
 If you need the old familiar behavior, you can import `imgui` from `imgui_bundle`:
 ```python
 from ara_imgui import App

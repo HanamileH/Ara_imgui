@@ -1,10 +1,11 @@
 from __future__ import annotations
 import functools
-from typing import Any, Callable, FrozenSet
+from typing import Any, Callable, Dict, FrozenSet, NamedTuple, Tuple
 from imgui_bundle import imgui as _raw_imgui
 
 __all__ = [
     "CHANGED_WIDGETS",
+    "VALUE_SPECS",
     "ImguiProxy",
     "create_imgui_proxy",
     "unwrap_changed_result",
@@ -77,6 +78,208 @@ CHANGED_WIDGETS: FrozenSet[str] = frozenset(
 )
 
 
+class _ValueSpec(NamedTuple):
+    """Where a widget keeps its value and what to start from.
+
+    ``names``/``positions`` describe the value parameters in call order
+    (``positions`` count the leading label as position 0).  ``default`` is a
+    factory returning a fresh initial value, used only when the widget was
+    never seen before and the caller did not pass ``default=``.
+    """
+
+    names: Tuple[str, ...]
+    positions: Tuple[int, ...]
+    default: Callable[[], Any]
+
+    @property
+    def count(self) -> int:
+        return len(self.names)
+
+
+def _int_default() -> int:
+    return 0
+
+
+def _float_default() -> float:
+    return 0.0
+
+
+def _int_list(size: int) -> Callable[[], list]:
+    return lambda: [0] * size
+
+
+def _float_list(size: int) -> Callable[[], list]:
+    return lambda: [0.0] * size
+
+
+# The value parameters of every wrapped widget.  Names must match the
+# installed binding, because they are used when the value is passed as a
+# keyword or omitted entirely.  Keeping the table explicit also gives each
+# widget the right zero value (``""`` for text, ``0`` for a combo index, ...).
+VALUE_SPECS: Dict[str, _ValueSpec] = {
+    # Boolean inputs
+    "checkbox": _ValueSpec(("v",), (1,), lambda: False),
+    "checkbox_flags": _ValueSpec(("flags",), (1,), _int_default),
+
+    # Colors
+    "color_edit3": _ValueSpec(("col",), (1,), _float_list(3)),
+    "color_edit4": _ValueSpec(("col",), (1,), lambda: [0.0, 0.0, 0.0, 1.0]),
+    "color_picker3": _ValueSpec(("col",), (1,), _float_list(3)),
+    "color_picker4": _ValueSpec(("col",), (1,), lambda: [0.0, 0.0, 0.0, 1.0]),
+
+    # Selection
+    "combo": _ValueSpec(("current_item",), (1,), _int_default),
+    "list_box": _ValueSpec(("current_item",), (1,), _int_default),
+
+    # Text
+    "input_text": _ValueSpec(("str",), (1,), lambda: ""),
+    "input_text_multiline": _ValueSpec(("str",), (1,), lambda: ""),
+    # input_text_with_hint is the odd one out: the hint comes before the value.
+    "input_text_with_hint": _ValueSpec(("str",), (2,), lambda: ""),
+
+    # Integers
+    "input_int": _ValueSpec(("v",), (1,), _int_default),
+    "input_int2": _ValueSpec(("v",), (1,), _int_list(2)),
+    "input_int3": _ValueSpec(("v",), (1,), _int_list(3)),
+    "input_int4": _ValueSpec(("v",), (1,), _int_list(4)),
+    "drag_int": _ValueSpec(("v",), (1,), _int_default),
+    "drag_int2": _ValueSpec(("v",), (1,), _int_list(2)),
+    "drag_int3": _ValueSpec(("v",), (1,), _int_list(3)),
+    "drag_int4": _ValueSpec(("v",), (1,), _int_list(4)),
+    "drag_int_range2": _ValueSpec(
+        ("v_current_min", "v_current_max"), (1, 2), lambda: (0, 0)
+    ),
+    "slider_int": _ValueSpec(("v",), (1,), _int_default),
+    "slider_int2": _ValueSpec(("v",), (1,), _int_list(2)),
+    "slider_int3": _ValueSpec(("v",), (1,), _int_list(3)),
+    "slider_int4": _ValueSpec(("v",), (1,), _int_list(4)),
+    "v_slider_int": _ValueSpec(("v",), (2,), _int_default),
+
+    # Floats
+    "input_float": _ValueSpec(("v",), (1,), _float_default),
+    "input_float2": _ValueSpec(("v",), (1,), _float_list(2)),
+    "input_float3": _ValueSpec(("v",), (1,), _float_list(3)),
+    "input_float4": _ValueSpec(("v",), (1,), _float_list(4)),
+    "input_double": _ValueSpec(("v",), (1,), _float_default),
+    "drag_float": _ValueSpec(("v",), (1,), _float_default),
+    "drag_float2": _ValueSpec(("v",), (1,), _float_list(2)),
+    "drag_float3": _ValueSpec(("v",), (1,), _float_list(3)),
+    "drag_float4": _ValueSpec(("v",), (1,), _float_list(4)),
+    "drag_float_range2": _ValueSpec(
+        ("v_current_min", "v_current_max"), (1, 2), lambda: (0.0, 0.0)
+    ),
+    "slider_float": _ValueSpec(("v",), (1,), _float_default),
+    "slider_float2": _ValueSpec(("v",), (1,), _float_list(2)),
+    "slider_float3": _ValueSpec(("v",), (1,), _float_list(3)),
+    "slider_float4": _ValueSpec(("v",), (1,), _float_list(4)),
+    "slider_angle": _ValueSpec(("v_rad",), (1,), _float_default),
+    "v_slider_float": _ValueSpec(("v",), (2,), _float_default),
+}
+
+
+_MISSING = object()
+
+
+def _widget_id(label: Any) -> str:
+    """Return the part of an ImGui label that makes up the widget ID.
+
+    Dear ImGui hashes everything after ``##`` (or ``###``), so ``"Age##age"``
+    and ``"Years##age"`` are the same widget and share their stored value.
+    """
+    text = str(label)
+    if "##" in text:
+        return text.rsplit("##", 1)[1]
+    return text
+
+
+def _stored_part(stored: Any, index: int, count: int) -> Any:
+    """Pick one value out of a stored multi-value widget result."""
+    if count == 1:
+        return stored
+    try:
+        return stored[index]
+    except (IndexError, KeyError, TypeError):
+        return _MISSING
+
+
+def _resolve_value_arguments(
+    spec: _ValueSpec,
+    values: Dict[str, Any],
+    key: str,
+    args: Tuple[Any, ...],
+    kwargs: Dict[str, Any],
+) -> Tuple[list, Dict[str, Any]]:
+    """Fill omitted/``None`` widget values from the value memory."""
+    args = list(args)
+    defaults = kwargs.pop("default", _MISSING)
+    stored = values.get(key, _MISSING)
+
+    resolved = []
+    for index, (name, position) in enumerate(zip(spec.names, spec.positions)):
+        if len(args) > position:
+            provided = args[position]
+        elif name in kwargs:
+            provided = kwargs.pop(name)
+        else:
+            provided = _MISSING
+
+        if provided is not _MISSING and provided is not None:
+            value = provided
+        else:
+            value = _MISSING
+
+            if stored is not _MISSING:
+                value = _stored_part(stored, index, spec.count)
+
+            if value is _MISSING and defaults is not _MISSING and defaults is not None:
+                value = _stored_part(defaults, index, spec.count)
+
+            if value is _MISSING:
+                value = _stored_part(spec.default(), index, spec.count)
+
+        resolved.append(value)
+
+    # Put the resolved values back where the binding expects them: replace an
+    # existing positional argument or pass the value by keyword.
+    for index, (name, position) in enumerate(zip(spec.names, spec.positions)):
+        if len(args) > position:
+            args[position] = resolved[index]
+        else:
+            kwargs[name] = resolved[index]
+
+    return args, kwargs
+
+
+def _wrap_value_widget(
+    func: Callable[..., Any],
+    spec: _ValueSpec,
+    values: Dict[str, Any],
+) -> Callable[..., Any]:
+    """Wrap one value widget so it remembers the value it returned."""
+
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if args:
+            label = args[0]
+        elif "label" in kwargs:
+            label = kwargs["label"]
+        else:
+            raise TypeError(
+                f"{func.__name__}() missing required argument: 'label'"
+            )
+
+        key = _widget_id(label)
+        args, kwargs = _resolve_value_arguments(spec, values, key, args, kwargs)
+        value = unwrap_changed_result(func(*args, **kwargs))
+
+        # Remember what the widget returned; the next frame uses it when the
+        # caller omits the value or passes None.
+        values[key] = value
+        return value
+
+    return wrapper
+
+
 def unwrap_changed_result(result: Any) -> Any:
     """Return a widget result without its leading ``changed`` flag.
 
@@ -92,16 +295,6 @@ def unwrap_changed_result(result: Any) -> Any:
     ):
         return result[1] if len(result) == 2 else result[1:]
     return result
-
-
-def _wrap_changed(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Build the ``changed``-less variant of a single imgui function."""
-
-    @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        return unwrap_changed_result(func(*args, **kwargs))
-
-    return wrapper
 
 
 class _ChildContext:
@@ -242,13 +435,19 @@ class ImguiProxy:
     underlying module unchanged, so ``imgui.ImVec2``, ``imgui.begin``,
     ``imgui.button`` and friends behave exactly as before.  The original
     module stays available as :attr:`raw`.
+
+    Value widgets remember the value they returned, keyed by the widget ID
+    (the part of the label after ``##``).  The value argument may therefore
+    be omitted or passed as ``None`` -- the remembered value is reused.  When
+    a value is passed, it replaces the remembered one.
     """
 
-    __slots__ = ("_module", "_cache")
+    __slots__ = ("_module", "_cache", "_values")
 
     def __init__(self, module: Any = _raw_imgui) -> None:
         object.__setattr__(self, "_module", module)
         object.__setattr__(self, "_cache", {})
+        object.__setattr__(self, "_values", {})
 
     def __getattr__(self, name: str) -> Any:
         module = object.__getattribute__(self, "_module")
@@ -262,7 +461,11 @@ class ImguiProxy:
         else:
             attribute = getattr(module, name)
             if name in CHANGED_WIDGETS:
-                value = _wrap_changed(attribute)
+                value = _wrap_value_widget(
+                    attribute,
+                    VALUE_SPECS[name],
+                    object.__getattribute__(self, "_values"),
+                )
             else:
                 value = attribute
 
@@ -332,11 +535,43 @@ class ImguiProxy:
             checker = module.is_item_edited
         return bool(checker())
 
+    def set_item_value(self, id: Any, value: Any) -> None:
+        """Set the remembered value of the widget with the given ID.
+
+        ``id`` is the widget ID -- the part of the label after ``##`` -- or
+        the whole label.  The value is used the next time that widget's value
+        argument is omitted or passed as ``None``::
+
+            imgui.set_item_value("Age##input_id", 18)
+            age = imgui.input_int("Age##input_id")
+
+        No ImGui item is touched: this only changes what the widget will use
+        the next time it is submitted without a value.  Passing ``None``
+        forgets the remembered value, making the widget fall back to its
+        ``default=`` (or its zero value) on the next frame.
+        """
+        if id is None:
+            raise ValueError("id must not be None")
+
+        values = object.__getattribute__(self, "_values")
+        key = _widget_id(id)
+        if value is None:
+            values.pop(key, None)
+        else:
+            values[key] = value
+
     def __dir__(self) -> list:
         module = object.__getattribute__(self, "_module")
         return sorted(
             set(dir(module))
-            | {"child", "is_item_changed", "raw", "table", "tree"}
+            | {
+                "child",
+                "is_item_changed",
+                "raw",
+                "set_item_value",
+                "table",
+                "tree",
+            }
         )
 
     def __repr__(self) -> str:
