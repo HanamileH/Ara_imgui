@@ -10,6 +10,9 @@ re-exported unchanged, then the parts Ara_imgui customizes are overridden:
   the label ID) and reuses it; ``default=`` sets the value for the first
   frame, and an explicitly passed value overwrites the remembered one;
 - :func:`set_item_value` explicitly changes a remembered value by widget ID;
+- a label ending in ``++`` gets a unique per-label, per-frame counter ID
+  (``"Name++"`` becomes ``"Name##Name_0"``, ``"Name##Name_1"``, ...); use
+  ``\\++`` for a literal trailing ``++``;
 - :func:`child`, :func:`table` and :func:`tree` are context managers;
 - :data:`raw` points at the untouched ``imgui_bundle.imgui`` module.
 
@@ -20,10 +23,15 @@ completion and signatures match this module's actual API.
 from imgui_bundle.imgui import *  # noqa: F401,F403
 
 from ._imgui import CHANGED_WIDGETS as _CHANGED_WIDGETS
+from ._imgui import LABEL_WIDGETS as _LABEL_WIDGETS
 from ._imgui import imgui as _proxy
 
 for _widget in _CHANGED_WIDGETS:
     globals()[_widget] = getattr(_proxy, _widget)
+
+for _widget in _LABEL_WIDGETS:
+    globals()[_widget] = getattr(_proxy, _widget)
+
 del _widget
 
 child = _proxy.child
@@ -31,4 +39,5 @@ table = _proxy.table
 tree = _proxy.tree
 is_item_changed = _proxy.is_item_changed
 set_item_value = _proxy.set_item_value
+new_frame = _proxy.new_frame
 raw = _proxy.raw

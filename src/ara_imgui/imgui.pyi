@@ -10,6 +10,10 @@
 # or ``None``, the value the same widget (same label ID) returned on the
 # previous frame is reused.  ``default=`` supplies the value for the very first
 # frame, before anything has been remembered.
+#
+# A label ending in ``++`` is expanded to a unique per-label, per-frame ID:
+# ``"Name++"`` becomes ``"Name##Name_0"``, then ``"Name##Name_1"``.  Use
+# ``\++`` for a literal trailing ``++``.
 from types import ModuleType
 from typing import Any, List, Optional, Tuple, overload
 

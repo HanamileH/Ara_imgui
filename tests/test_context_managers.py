@@ -59,6 +59,15 @@ def test_child_context_manager_ends_child_on_every_frame():
     _run_frame(body)
 
 
+def test_child_context_manager_supports_plus_plus_labels():
+    def body():
+        with imgui.child("child++"):
+            imgui.text("content")
+
+    _run_frame(body)
+    _run_frame(body)
+
+
 def test_table_infers_columns_from_headers():
     state = {}
 
@@ -166,6 +175,17 @@ def test_tree_context_manager_balances_tree_stack():
                 imgui.text("content")
 
     # A misplaced or missing TreePop() would trip ImGui on the second frame.
+    _run_frame(body)
+    _run_frame(body)
+
+
+def test_tree_context_manager_supports_plus_plus_labels():
+    def body():
+        imgui.set_next_item_open(True)
+        with imgui.tree("node++") as node:
+            if node:
+                imgui.text("content")
+
     _run_frame(body)
     _run_frame(body)
 

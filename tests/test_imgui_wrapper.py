@@ -7,6 +7,7 @@ binding that is installed.
 
 import ast
 import types
+import warnings
 from pathlib import Path
 
 import ara_imgui
@@ -15,6 +16,7 @@ from imgui_bundle import imgui as raw_imgui
 from ara_imgui import imgui
 from ara_imgui._imgui import (
     CHANGED_WIDGETS,
+    LABEL_WIDGETS,
     VALUE_SPECS,
     ImguiProxy,
     unwrap_changed_result,
@@ -51,6 +53,13 @@ class _ValueEchoImgui:
 
     def __init__(self):
         self.calls = []
+        self.frame = 0
+
+    def get_frame_count(self):
+        return self.frame
+
+    def new_frame(self):
+        self.frame += 1
 
     def input_text(self, label, str, flags=0, callback=None, user_data=None):
         self.calls.append(("input_text", label, str))
@@ -59,6 +68,10 @@ class _ValueEchoImgui:
     def input_int(self, label, v, step=1, step_fast=100, flags=0):
         self.calls.append(("input_int", label, v))
         return True, v
+
+    def button(self, label):
+        self.calls.append(("button", label))
+        return False
 
     def combo(self, label, current_item, items, popup_max_height_in_items=-1):
         self.calls.append(("combo", label, current_item))
@@ -83,6 +96,15 @@ class _ValueEchoImgui:
 def test_changed_widgets_exist_in_installed_binding():
     missing = [name for name in CHANGED_WIDGETS if not hasattr(raw_imgui, name)]
     assert missing == []
+
+
+def test_label_widgets_exist_in_installed_binding():
+    missing = [name for name in LABEL_WIDGETS if not hasattr(raw_imgui, name)]
+    assert missing == []
+
+
+def test_label_and_value_widget_lists_are_disjoint():
+    assert set(LABEL_WIDGETS).isdisjoint(CHANGED_WIDGETS)
 
 
 def test_unwrap_single_value():
@@ -256,6 +278,125 @@ def test_public_imgui_has_set_item_value():
     assert callable(imgui.set_item_value)
 
 
+def test_plus_plus_uses_a_per_label_counter():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        assert proxy.input_text("Name++", "first") == "first"
+        assert proxy.input_text("Name++", "second") == "second"
+        proxy.button("Delete++")
+        proxy.button("Delete++")
+
+    assert fake.calls == [
+        ("input_text", "Name##Name_0", "first"),
+        ("input_text", "Name##Name_1", "second"),
+        ("button", "Delete##Delete_0"),
+        ("button", "Delete##Delete_1"),
+    ]
+
+
+def test_plus_plus_counter_starts_at_zero_for_each_label():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    proxy.button("First++")
+    proxy.button("Second++")
+    proxy.button("First++")
+
+    assert [call[1] for call in fake.calls] == [
+        "First##First_0",
+        "Second##Second_0",
+        "First##First_1",
+    ]
+
+
+def test_plus_plus_counter_resets_when_the_frame_changes():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    proxy.button("Delete++")
+    fake.frame += 1
+    proxy.button("Delete++")
+
+    assert [call[1] for call in fake.calls] == [
+        "Delete##Delete_0",
+        "Delete##Delete_0",
+    ]
+
+
+def test_plus_plus_counter_resets_on_new_frame():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    proxy.button("Delete++")
+    proxy.new_frame()
+    proxy.button("Delete++")
+
+    assert [call[1] for call in fake.calls] == [
+        "Delete##Delete_0",
+        "Delete##Delete_0",
+    ]
+
+
+def test_plus_plus_works_for_a_label_passed_as_keyword():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    proxy.button(label="Delete++")
+
+    assert fake.calls == [("button", "Delete##Delete_0")]
+
+
+def test_plus_plus_escape_keeps_a_literal_suffix():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    proxy.button("C\\++")
+    proxy.button("C\\++")
+
+    assert [call[1] for call in fake.calls] == ["C++", "C++"]
+
+
+def test_plus_plus_warns_for_stateful_widgets():
+    proxy = ImguiProxy(_ValueEchoImgui())
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        proxy.input_text("Name++", "x")
+
+    assert any("stateful" in str(item.message) for item in caught)
+
+
+def test_plus_plus_warns_when_combined_with_an_explicit_id():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        proxy.input_text("Name##input_id++", "x")
+
+    assert any("##" in str(item.message) for item in caught)
+    assert fake.calls == [("input_text", "Name##input_id_0", "x")]
+
+
+def test_plus_plus_counter_does_not_replace_state_memory_ids():
+    fake = _ValueEchoImgui()
+    proxy = ImguiProxy(fake)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        proxy.input_text("Name++", "first")
+        proxy.set_item_value("Name_1", "second")
+        assert proxy.input_text("Name++") == "second"
+
+    assert [call[1] for call in fake.calls] == [
+        "Name##Name_0",
+        "Name##Name_1",
+    ]
+
+
 def test_proxy_exposes_raw_module():
     fake = _FakeImgui()
     proxy = ImguiProxy(fake)
@@ -282,13 +423,17 @@ def test_is_item_changed_prefers_native_implementation():
     assert ImguiProxy(FakeWithNative()).is_item_changed() is True
 
 
-def test_public_imgui_wraps_value_widgets_only():
+def test_public_imgui_wraps_value_and_label_widgets():
     assert imgui.input_text is not raw_imgui.input_text
     assert imgui.input_text.__wrapped__ is raw_imgui.input_text
     assert imgui.combo.__wrapped__ is raw_imgui.combo
 
-    assert imgui.button is raw_imgui.button
-    assert imgui.begin is raw_imgui.begin
+    assert imgui.button is not raw_imgui.button
+    assert imgui.button.__wrapped__ is raw_imgui.button
+    assert imgui.begin.__wrapped__ is raw_imgui.begin
+    assert imgui.new_frame.__wrapped__ is raw_imgui.new_frame
+
+    assert imgui.text is raw_imgui.text
     assert imgui.is_item_hovered is raw_imgui.is_item_hovered
     assert imgui.ImVec2 is raw_imgui.ImVec2
 

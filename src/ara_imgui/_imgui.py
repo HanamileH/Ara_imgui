@@ -1,10 +1,12 @@
 from __future__ import annotations
 import functools
+import warnings
 from typing import Any, Callable, Dict, FrozenSet, NamedTuple, Tuple
 from imgui_bundle import imgui as _raw_imgui
 
 __all__ = [
     "CHANGED_WIDGETS",
+    "LABEL_WIDGETS",
     "VALUE_SPECS",
     "ImguiProxy",
     "create_imgui_proxy",
@@ -74,6 +76,45 @@ CHANGED_WIDGETS: FrozenSet[str] = frozenset(
         "slider_float4",
         "slider_angle",
         "v_slider_float",
+    }
+)
+
+
+# Widgets that take a label/ID as their first argument but do not return a
+# value.  They get the same ``++`` counter handling as value widgets (which
+# are covered by CHANGED_WIDGETS), so ``imgui.button("Delete++")`` works too.
+LABEL_WIDGETS: FrozenSet[str] = frozenset(
+    {
+        # Buttons and selection
+        "arrow_button",
+        "button",
+        "color_button",
+        "invisible_button",
+        "menu_item",
+        "radio_button",
+        "selectable",
+        "small_button",
+
+        # Trees and collapsing headers
+        "collapsing_header",
+        "tree_node",
+        "tree_push",
+
+        # Menus, popups, tabs, children, windows
+        "begin",
+        "begin_child",
+        "begin_combo",
+        "begin_list_box",
+        "begin_menu",
+        "begin_popup",
+        "begin_popup_modal",
+        "begin_tab_bar",
+        "begin_tab_item",
+        "begin_table",
+        "open_popup",
+
+        # Table columns
+        "table_setup_column",
     }
 )
 
@@ -250,25 +291,101 @@ def _resolve_value_arguments(
     return args, kwargs
 
 
+_LABEL_ARGUMENT_NAMES: Tuple[str, ...] = ("label", "str_id", "name", "desc_id")
+
+
+def _find_label(
+    args: Tuple[Any, ...], kwargs: Dict[str, Any]
+) -> Tuple[Any, Any]:
+    """Return ``(label, keyword_name)`` for the first label-like argument.
+
+    ``keyword_name`` is ``None`` when the label was passed positionally.
+    ``label`` is ``_MISSING`` when no string label argument was found.
+    """
+    if args and isinstance(args[0], str):
+        return args[0], None
+
+    for name in _LABEL_ARGUMENT_NAMES:
+        if name in kwargs and isinstance(kwargs[name], str):
+            return kwargs[name], name
+
+    return _MISSING, None
+
+
+def _replace_label(
+    args: Tuple[Any, ...],
+    kwargs: Dict[str, Any],
+    keyword_name: Any,
+    label: str,
+) -> Tuple[Tuple[Any, ...], Dict[str, Any]]:
+    """Return call arguments with the label replaced."""
+    if keyword_name is None:
+        return (label,) + args[1:], kwargs
+
+    kwargs = dict(kwargs)
+    kwargs[keyword_name] = label
+    return args, kwargs
+
+
+def _wrap_label_widget(
+    func: Callable[..., Any],
+    name: str,
+    proxy: ImguiProxy,
+) -> Callable[..., Any]:
+    """Wrap a label-taking widget so ``++`` labels get a frame counter."""
+
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        label, keyword_name = _find_label(args, kwargs)
+        if label is not _MISSING:
+            expanded = proxy._expand_label(name, label)
+            if expanded != label:
+                args, kwargs = _replace_label(
+                    args, kwargs, keyword_name, expanded
+                )
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def _wrap_new_frame(
+    func: Callable[..., Any],
+    proxy: ImguiProxy,
+) -> Callable[..., Any]:
+    """Reset the ``++`` counters when a new frame starts."""
+
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        result = func(*args, **kwargs)
+        proxy._reset_label_counters()
+        return result
+
+    return wrapper
+
+
 def _wrap_value_widget(
     func: Callable[..., Any],
+    name: str,
     spec: _ValueSpec,
     values: Dict[str, Any],
+    proxy: ImguiProxy,
 ) -> Callable[..., Any]:
     """Wrap one value widget so it remembers the value it returned."""
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        if args:
-            label = args[0]
-        elif "label" in kwargs:
-            label = kwargs["label"]
-        else:
+        label, keyword_name = _find_label(args, kwargs)
+        if label is _MISSING:
             raise TypeError(
                 f"{func.__name__}() missing required argument: 'label'"
             )
 
-        key = _widget_id(label)
+        expanded = proxy._expand_label(name, label)
+        if expanded != label:
+            args, kwargs = _replace_label(args, kwargs, keyword_name, expanded)
+
+        key = _widget_id(expanded)
         args, kwargs = _resolve_value_arguments(spec, values, key, args, kwargs)
         value = unwrap_changed_result(func(*args, **kwargs))
 
@@ -440,14 +557,27 @@ class ImguiProxy:
     (the part of the label after ``##``).  The value argument may therefore
     be omitted or passed as ``None`` -- the remembered value is reused.  When
     a value is passed, it replaces the remembered one.
+
+    A label ending in ``++`` is expanded to a unique label using a per-label
+    counter that restarts every frame, e.g. ``"Name++"`` becomes
+    ``"Name##Name_0"`` on its first use and ``"Name##Name_1"`` on the second.
+    Use ``\\++`` to get a literal trailing ``++``.
     """
 
-    __slots__ = ("_module", "_cache", "_values")
+    __slots__ = (
+        "_module",
+        "_cache",
+        "_values",
+        "_label_counters",
+        "_counter_frame",
+    )
 
     def __init__(self, module: Any = _raw_imgui) -> None:
         object.__setattr__(self, "_module", module)
         object.__setattr__(self, "_cache", {})
         object.__setattr__(self, "_values", {})
+        object.__setattr__(self, "_label_counters", {})
+        object.__setattr__(self, "_counter_frame", None)
 
     def __getattr__(self, name: str) -> Any:
         module = object.__getattribute__(self, "_module")
@@ -463,22 +593,93 @@ class ImguiProxy:
             if name in CHANGED_WIDGETS:
                 value = _wrap_value_widget(
                     attribute,
+                    name,
                     VALUE_SPECS[name],
                     object.__getattribute__(self, "_values"),
+                    self,
                 )
+            elif name in LABEL_WIDGETS:
+                value = _wrap_label_widget(attribute, name, self)
+            elif name == "new_frame":
+                value = _wrap_new_frame(attribute, self)
             else:
                 value = attribute
 
         cache[name] = value
         return value
 
+    def _sync_label_counters(self) -> None:
+        """Reset ``++`` counters when the underlying ImGui frame changes."""
+        module = object.__getattribute__(self, "_module")
+        getter = getattr(module, "get_frame_count", None)
+        if getter is None:
+            return
+
+        try:
+            frame = int(getter())
+        except Exception:  # pragma: no cover - depends on the binding
+            return
+
+        if frame != object.__getattribute__(self, "_counter_frame"):
+            object.__setattr__(self, "_counter_frame", frame)
+            object.__getattribute__(self, "_label_counters").clear()
+
+    def _reset_label_counters(self) -> None:
+        counters = object.__getattribute__(self, "_label_counters")
+        counters.clear()
+
+        module = object.__getattribute__(self, "_module")
+        getter = getattr(module, "get_frame_count", None)
+        if getter is not None:
+            try:
+                object.__setattr__(self, "_counter_frame", int(getter()))
+            except Exception:  # pragma: no cover - depends on the binding
+                pass
+
+    def _expand_label(self, widget: str, label: Any) -> Any:
+        """Expand a trailing ``++`` into a per-label, per-frame counter ID."""
+        if not isinstance(label, str) or not label.endswith("++"):
+            return label
+
+        # ``\++`` is the escape sequence: a literal trailing ``++``.
+        if label.endswith("\\++"):
+            return label[:-3] + "++"
+
+        self._sync_label_counters()
+        counters = object.__getattribute__(self, "_label_counters")
+
+        base = label[:-2]
+        index = counters.get(base, 0)
+        counters[base] = index + 1
+
+        if "##" in base:
+            warnings.warn(
+                f"ara_imgui: label {label!r} ends with '++' and also contains "
+                "'##'. The counter is appended to the explicit ID; use either "
+                "'++' or an explicit ID, not both.",
+                UserWarning,
+                stacklevel=3,
+            )
+            return f"{base}_{index}"
+
+        if widget in CHANGED_WIDGETS:
+            warnings.warn(
+                f"ara_imgui: label {label!r} ends with '++' and is used with "
+                f"the stateful widget {widget!r}. Per-frame counter IDs can "
+                "move remembered values between items when the order changes; "
+                "pass an explicit ID instead.",
+                UserWarning,
+                stacklevel=3,
+            )
+
+        return f"{base}##{base}_{index}"
     def child(self, *args: Any, **kwargs: Any) -> _ChildContext:
         """Context manager around ``begin_child`` / ``end_child``::
 
             with imgui.child("Log", size=imgui.ImVec2(0, 120)):
                 imgui.text("Child content")
         """
-        return _ChildContext(self._module, *args, **kwargs)
+        return _ChildContext(self, *args, **kwargs)
 
     def tree(self, *args: Any, **kwargs: Any) -> _TreeContext:
         """Context manager around ``tree_node`` / ``tree_pop``::
@@ -487,7 +688,7 @@ class ImguiProxy:
                 if node:
                     imgui.text("Advanced options")
         """
-        return _TreeContext(self._module, *args, **kwargs)
+        return _TreeContext(self, *args, **kwargs)
 
     def table(
         self,
@@ -516,7 +717,7 @@ class ImguiProxy:
         order.
         """
         return _TableContext(
-            self._module, label, columns, headers, borders
+            self, self._expand_label("table", label), columns, headers, borders
         )
 
     def is_item_changed(self) -> bool:

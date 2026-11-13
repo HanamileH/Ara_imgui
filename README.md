@@ -9,6 +9,7 @@ The main goal of this library is simplified and more consistent work with the ex
 - Simple launch of an ImGui application with a single `run` function
 - Ability to easily change the appearance, including themes and font
 - Value widgets return the new value directly; to react to changes, use `imgui.is_item_changed()` (see below for details)
+- Optional per-label `++` counter for repeated widgets (see the caveats below)
 - Context managers for child regions, tables, and tree nodes
 - Fixes for various other small things
 - Ready-to-run examples in the `examples` folder
@@ -72,7 +73,32 @@ app.run(gui)
 Widgets that do not report a changed flag (buttons, tree nodes, layout helper elements)
 keep the usual ImGui return value.
 
-The value can also be omitted (or passed as `None`). In that case the widget
+If you need the old familiar behavior, you can import `imgui` from `imgui_bundle`:
+```python
+from ara_imgui import App
+from imgui_bundle import imgui
+
+app = App("Widget example")
+
+name = "Michail"
+option = 0
+
+def gui():
+    global name, option
+
+    changed, name = imgui.input_text("Name", name)
+
+    if changed:
+        print(f"Name changed to {name}")
+
+    _, option = imgui.combo("Option", option, ["One", "Two", "Three"])
+
+app.run(gui)
+```
+
+### Stateful widgets with remembered values
+
+The value can be omitted (or passed as `None`). In that case the widget
 reuses the value it returned on the previous frame. Values are remembered by
 the widget ID — the part of the label after `##` — so the same widget keeps
 its state across frames. Use `default=` to set the value for the first frame:
@@ -102,28 +128,39 @@ imgui.set_item_value("Age##input_id", 18)
 Passing `None` forgets the remembered value, so the widget falls back to its
 `default=` or zero value on the next frame.
 
-If you need the old familiar behavior, you can import `imgui` from `imgui_bundle`:
+### Automatic widget IDs with `++`
+
+When the same widget is submitted several times in a loop, a label ending in
+`++` gets a unique ID from a per-label counter. The counter restarts at zero
+every frame:
+
 ```python
-from ara_imgui import App
-from imgui_bundle import imgui
-
-app = App("Widget example")
-
-name = "Michail"
-option = 0
-
-def gui():
-    global name, option
-
-    changed, name = imgui.input_text("Name", name)
-
-    if changed:
-        print(f"Name changed to {name}")
-
-    _, option = imgui.combo("Option", option, ["One", "Two", "Three"])
-
-app.run(gui)
+for row in rows:
+    row_name["name"] = imgui.input_text("Name++", row["name"])
+    if imgui.button("Delete++"):
+        ...
 ```
+
+The first `Name++` becomes `Name##Name_0`, the second `Name##Name_1`, and so
+on. `Delete++` uses its own counter, independent of `Name++`.
+
+Use `\++` when the label itself should end with a literal `++` (in Python
+source, escape the backslash too):
+
+```python
+imgui.button("C\\++")  # displayed as C++
+```
+
+`++` cannot be combined with an explicit `##` ID: a warning is printed, and
+the counter is appended to the explicit ID. Using `++` with a stateful (value)
+widget also prints a warning, because a remembered value is attached to the
+generated ID and can move to another item when the order changes.
+
+> **This is not the best practice.** The counter depends on submission
+> order: if rows are inserted, removed, or reordered, IDs shift and widgets can
+> pick up another row's state. Use `++` only when the item order is stable.
+> Otherwise specify an explicit ID, for example
+> `imgui.input_text(f"Name##row_{row.id}", row["name"])`.
 
 ### Flag enums
 
