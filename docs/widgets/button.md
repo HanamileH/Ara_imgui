@@ -1,59 +1,101 @@
-# imgui.button
+# Buttons
+
+Buttons perform an action when clicked. All of them return `True` for exactly
+one frame when they are pressed, so the usual pattern is an `if` around the
+button call.
 
 ## Description
 
-Displays a button and returns `True` when it is pressed.
+Ara_imgui wraps four button functions:
+
+- `imgui.button()` draws a normal button with a visible label.
+- `imgui.small_button()` draws a compact button.
+- `imgui.invisible_button()` draws an invisible hit area; it is useful for
+  custom widgets and drag areas.
+- `imgui.arrow_button()` draws a button with one of four direction arrows.
+
+All of them take a label (or string ID) that follows the normal `##` ID rules
+and supports a trailing `++` counter. See
+[Labels and IDs](../concepts.md#labels-and-ids).
 
 ## Syntax
 
 ```py
 pressed = imgui.button(label, size=None)
+pressed = imgui.small_button(label)
+pressed = imgui.invisible_button(str_id, size, flags=0)
+pressed = imgui.arrow_button(str_id, dir)
 ```
+
+## Variants
+
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `imgui.button` | `bool` | Normal button with a visible label. |
+| `imgui.small_button` | `bool` | Compact button. |
+| `imgui.invisible_button` | `bool` | Invisible hit area of the requested size. |
+| `imgui.arrow_button` | `bool` | Button with a direction arrow. |
 
 ## Parameters
 
-- **label** – (str) Text displayed on the button. Supports `##` IDs and the
-  `++` counter.
-- **size** – (ImVec2, optional) Button size. Defaults to the size calculated
-  from the label and style.
+- **label** – (str) Visible text. Use `"Text##id"` to keep the ID separate from the visible text.
+- **size** – (ImVec2Like) Button size. Use `imgui.ImVec2(width, height)`; omit it to use the default size.
+- **str_id** – (str) ID used for an invisible or arrow button.
+- **flags** – (int) Optional button flags. See [Flags](../concepts.md#flags).
+- **dir** – (Dir) Arrow direction, for example `imgui.Dir_.left` or `imgui.Dir_.right`.
 
 ## Return
 
-- **pressed** – (bool) `True` if the button was pressed, otherwise `False`.
+- **pressed** – (bool) `True` on the frame the button was pressed.
 
 ## Usage example
 
-```py
+```python
 from ara_imgui import App, imgui
+
+app = App("Buttons")
 
 def gui():
     if imgui.button("Click me!"):
-        print("Button clicked!")
+        print("Clicked!")
 
-    if imgui.button("Custom size button", imgui.ImVec2(200, 50)):
-        print("Second button clicked!")
+    if imgui.button("Wide button", imgui.ImVec2(200, 40)):
+        print("Wide button clicked!")
 
-app = App()
+    if imgui.small_button("Small"):
+        print("Small button clicked!")
+
+    if imgui.arrow_button("##right", imgui.Dir_.right):
+        print("Right arrow clicked!")
+
 app.run(gui)
 ```
 
-## IDs and the `++` counter
+### Unique IDs in loops
 
-When buttons are created in a loop, give each one a unique ID. A trailing `++`
-does that automatically, but only while the order is stable:
+Every button in the same window needs a unique ID. When buttons are created in
+a loop, use an explicit ID or the `++` counter:
 
-```py
-for row in rows:
-    if imgui.button("Delete++"):
-        delete(row)
-```
-
-Prefer a stable explicit ID when rows can be reordered:
-
-```py
+```python
 for row in rows:
     if imgui.button(f"Delete##row_{row.id}"):
         delete(row)
 ```
 
-See [State and IDs](state_and_ids.md#automatic-widget-ids-with).
+The `++` counter is shorter, but it depends on submission order:
+
+```python
+for row in rows:
+    if imgui.button("Delete++"):
+        delete(row)
+```
+
+Use `++` only when the order of rows is stable. See
+[Labels and IDs](../concepts.md#labels-and-ids) for the escape sequence and
+warnings.
+
+## See also
+
+- [Labels and IDs](../concepts.md#labels-and-ids)
+- [imgui.radio_button](radio_button.md)
+- [imgui.checkbox](checkbox.md)

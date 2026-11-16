@@ -1,43 +1,39 @@
 # imgui.separator
+
 ## Description
-Displays a horizontal separator line. Useful for separating objects into groups and also for formatting tables.
+
+Draws a horizontal line that separates groups of widgets. It is purely visual:
+it has no label and no state.
+
+`imgui.separator` is often used between blocks of controls and between a table
+header and its rows.
 
 ## Syntax
+
 ```py
 imgui.separator()
 ```
 
-## Parameters
-- None
-
 ## Return
-- None
+
+- This function does not return a value.
 
 ## Usage example
+
 ```python
 from ara_imgui import App, imgui
+
+app = App("Separator example")
 
 def gui():
     imgui.text("First group")
     imgui.separator()
     imgui.text("Second group")
 
-    # You can also use it to separate table rows
-    imgui.columns(3)
-
-    for title in ["Column A", "Column B", "Column C"]:
-        imgui.text(title)
-        imgui.next_column()
-    
-    # Separation between table header and table rows
-    imgui.separator()
-
-    for i in range(15):
-        imgui.text(f"Item {i}")
-        imgui.next_column()
-
-    imgui.columns(1)
-
-app = App()
 app.run(gui)
 ```
+
+## See also
+
+- [imgui.text](text.md)
+- [Tables](table.md)

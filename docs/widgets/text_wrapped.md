@@ -1,26 +1,44 @@
 # imgui.text_wrapped
+
 ## Description
-Displays a text string that automatically wraps to the next line when it reaches the edge of the containing window or region. Does not return any value.
+
+Draws text and inserts line breaks automatically when the next word would not
+fit in the available width. Use it for paragraphs, descriptions, and long
+messages.
+
+The text is wrapped using the current window width; the wrap position changes
+when the window is resized.
 
 ## Syntax
+
 ```py
 imgui.text_wrapped(text)
 ```
 
 ## Parameters
-- **text** – (str) Text to display. Must be in string format. Line breaks will be inserted automatically based on the available width.
+
+- **text** – (str) The text to draw. Long lines are wrapped automatically.
 
 ## Return
-- **None** – This function does not return any value.
+
+- This function does not return a value.
 
 ## Usage example
-```py
+
+```python
 from ara_imgui import App, imgui
 
-def gui():
-    imgui.text_wrapped("This text will automatically wrap to the next line when it reaches the edge of the window.")
-    imgui.text_wrapped("Long paragraphs or descriptions are ideal for this widget as they will adapt to the window size.")
+app = App("Wrapped text")
 
-app = App()
+def gui():
+    imgui.text_wrapped(
+        "This text automatically wraps when it reaches the edge of the window. "
+        "Long paragraphs are much easier to read this way."
+    )
+
 app.run(gui)
 ```
+
+## See also
+
+- [imgui.text](text.md)

@@ -1,33 +1,48 @@
 # imgui.text_colored
+
 ## Description
-Displays colored text. This function allows you to display text with a specified color.
+
+Draws a line of text using the given color. The color is an RGBA vector with
+components in the `0.0`–`1.0` range. You can build it with `imgui.ImVec4` (or
+pass a list of four floats).
+
+The color affects only this call; it does not change the style for later text.
 
 ## Syntax
+
 ```py
 imgui.text_colored(color, text)
 ```
 
 ## Parameters
-- **color** – (ImVec4Like) vector of 4 values ​​representing the red, green, blue, and alpha channels. Must be in the range [0.0 - 1.0].
-- **text** – (str) Text to display. Must be in string format.
+
+- **color** – (ImVec4Like) RGBA color. Each component is in the `0.0`–`1.0` range.
+- **text** – (str) The text to draw.
 
 ## Return
-- None
+
+- This function does not return a value.
 
 ## Usage example
-```py
+
+```python
 from ara_imgui import App, imgui
 
+app = App("Colored text")
+
 def gui():
-    # Red text
-    imgui.text_colored(imgui.ImVec4(1.0, 0.0, 0.0, 1.0), "Hello, world!")
+    imgui.text_colored(imgui.ImVec4(1.0, 0.0, 0.0, 1.0), "Red")
+    imgui.text_colored(imgui.ImVec4(1.0, 1.0, 0.0, 1.0), "Yellow")
+    imgui.text_colored(imgui.ImVec4(0.6, 0.6, 0.6, 1.0), "Gray")
 
-    # Yellow text
-    imgui.text_colored(imgui.ImVec4(1.0, 1.0, 0.0, 1.0), "Goodbye, world!")
-
-    # Dark gray text
-    imgui.text_colored(imgui.ImVec4(0.2, 0.2, 0.2, 1.0), "Adios, mundo!")
-
-app = App()
 app.run(gui)
 ```
+
+The alpha component controls transparency. A common opaque color is
+`(r, g, b, 1.0)`. See [Colors and vectors](../concepts.md#colors-and-vectors)
+for a short explanation of `ImVec4`.
+
+## See also
+
+- [imgui.text](text.md)
+- [Colors and vectors](../concepts.md#colors-and-vectors)

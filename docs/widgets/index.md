@@ -1,49 +1,72 @@
-# Widget reference
+# Widget overview
 
-Ara_imgui does not reimplement Dear ImGui. It re-exports `imgui_bundle.imgui`
-and customizes a small, explicit set of widgets. The reference is split into
-three groups:
+Ara_imgui wraps a focused set of Dear ImGui widgets and passes the rest
+through unchanged. Use this page as a map of the widget documentation.
 
-| Group | What Ara_imgui changes | Reference |
-|-------|------------------------|-----------|
-| **Value widgets** | Return the new value directly (without the `changed` flag), remember the last value, and accept omitted/`None` values | [Value widgets](value_widgets.md) |
-| **Label widgets** | Expand a trailing `++` into a per-label, per-frame ID counter | [Label widgets](label_widgets.md) |
-| **Everything else** | Passed through unchanged from `imgui_bundle.imgui` | [imgui_bundle](https://github.com/pthom/imgui_bundle) |
+If you are new to the library, read [Core concepts](../concepts.md) first.
 
-## Common concepts
+## Text
 
-- **Value widgets** return the new value, not `(changed, value)`. Use
-  [`imgui.is_item_changed()`](state_and_ids.md#is_item_changed) right after the
-  widget to detect edits.
-- **Labels and IDs**: Dear ImGui hashes the part of a label after `##`. Use
-  `"Visible label##stable_id"` when the visible text is not unique.
-- **Remembered values**: omit the value argument or pass `None` to reuse the
-  value returned on the previous frame. `default=` sets the value for the first
-  frame. See [State and IDs](state_and_ids.md#value-memory).
-- **`++` counters**: a label ending in `++` becomes unique per submission and
-  frame. This is convenient for loops but depends on submission order, so it is
-  not a replacement for a stable explicit ID. See
-  [State and IDs](state_and_ids.md#automatic-widget-ids-with).
+| Widget | Description |
+|--------|-------------|
+| [Text](text.md) | Draws plain, non-interactive text. |
+| [Text colored](text_colored.md) | Draws text with an explicit color. |
+| [Text disabled](text_disabled.md) | Draws dimmed text for unavailable options. |
+| [Text wrapped](text_wrapped.md) | Draws text that wraps at the edge of the window. |
+| [Text link](text_link.md) | Draws clickable text that looks like a link. |
+| [Text link open url](text_link_open_url.md) | Draws a link that opens a URL when clicked. |
+| [Separator](separator.md) | Draws a horizontal separator line. |
 
-## Text and layout helpers
+## Buttons and selection
 
-These widgets are not wrapped: they behave exactly like their `imgui_bundle`
-counterparts, and use the standard Dear ImGui label/ID rules.
+| Widget | Description |
+|--------|-------------|
+| [Buttons](button.md) | Clickable controls: `button`, `small_button`, `invisible_button`, and `arrow_button`. |
+| [Radio button](radio_button.md) | A radio button for choosing one option from a group. |
+| [Checkbox](checkbox.md) | Toggle booleans: `checkbox` and `checkbox_flags`. |
+| [Selectable](selectable.md) | A clickable row that can report selection. |
+| [Menus](menus.md) | Menu entries and submenus: `menu_item` and `begin_menu`. |
+| [Color button](color_button.md) | A clickable color swatch. |
 
-| Function | Description |
-|----------|-------------|
-| [imgui.text](text.md) | Plain text |
-| [imgui.text_colored](text_colored.md) | Colored text |
-| [imgui.text_disabled](text_disabled.md) | Dimmed text |
-| [imgui.text_wrapped](text_wrapped.md) | Word-wrapped text |
-| [imgui.text_link](text_link.md) | Clickable text link |
-| [imgui.text_link_open_url](text_link_open_url.md) | Text link that opens a URL |
-| [imgui.separator](separator.md) | Horizontal separator |
+## Inputs
 
-## Context managers
+| Widget | Description |
+|--------|-------------|
+| [Input text](input_text.md) | A single-line text input. |
+| [Input text multiline](input_text_multiline.md) | A multi-line text input. |
+| [Input text with hint](input_text_with_hint.md) | A text input that shows a hint while empty. |
+| [Integer inputs](input_int.md) | Scalar and multi-component integer input fields. |
+| [Float inputs](input_float.md) | Scalar, multi-component, and double-precision numeric inputs. |
+| [Drag integers](drag_int.md) | Drag integer fields, including a two-handle range. |
+| [Drag floats](drag_float.md) | Drag float fields, including a two-handle range. |
+| [Integer sliders](slider_int.md) | Horizontal and vertical integer sliders. |
+| [Float sliders](slider_float.md) | Horizontal and vertical float sliders, plus an angle slider. |
+| [Combo box](combo.md) | Choose one item from a dropdown list. |
+| [List box](list_box.md) | A scrollable list of options. |
+| [Color edit](color_edit.md) | RGB and RGBA color editing widgets. |
+| [Color picker](color_picker.md) | RGB and RGBA color pickers. |
 
-| Context manager | Wraps |
-|-----------------|-------|
-| [imgui.child](child.md) | `begin_child()` / `end_child()` |
-| [imgui.table](table.md) | `columns()` / `columns(1)` |
-| [imgui.tree](tree.md) | `tree_node()` / `tree_pop()` |
+## Trees and containers
+
+| Widget | Description |
+|--------|-------------|
+| [Trees](tree.md) | Expandable sections: `tree_node`, `tree_push`, `collapsing_header`, and the `tree` context manager. |
+| [Child window](child.md) | A scrollable child region inside the current window. |
+| [Tables](table.md) | Simple column layouts with `imgui.table`, and the modern `begin_table` API. |
+| [Window](window.md) | Create your own floating window inside the app. |
+| [Popups](popups.md) | Context menus, modal dialogs, and custom popups. |
+| [Tabs](tabs.md) | Tab bars and tab items. |
+
+## State helpers
+
+| Widget | Description |
+|--------|-------------|
+| [Value memory](value_memory.md) | How value widgets remember their previous value. |
+| [Labels and IDs](labels_and_ids.md) | How visible labels, `##` IDs, and the `++` counter work. |
+| [is_item_changed](is_item_changed.md) | Detect whether the last value widget changed. |
+| [set_item_value](set_item_value.md) | Change the remembered value of a widget by ID. |
+
+## See also
+
+- [Core concepts](../concepts.md)
+- [Cheat sheet](../cheat_sheet.md)

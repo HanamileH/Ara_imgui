@@ -1,121 +1,74 @@
 # Widget cheat sheet
 
-This page lists every widget that Ara_imgui wraps or adds. Widgets are grouped
-by what they do. For full signatures, parameters, and return values, follow the
-links to the reference pages.
+Every widget documented by Ara_imgui is listed below. Follow the links
+for complete signatures, parameters, return values, and examples.
 
-Everything not listed here is re-exported from `imgui_bundle.imgui` unchanged.
+New to the library? Start with [Core concepts](concepts.md), especially
+[Labels and IDs](concepts.md#labels-and-ids) and
+[Value memory](concepts.md#value-memory).
+
+## Text
+
+| Widget | Description |
+|--------|-------------|
+| [Text](widgets/text.md) | Draws plain, non-interactive text. |
+| [Text colored](widgets/text_colored.md) | Draws text with an explicit color. |
+| [Text disabled](widgets/text_disabled.md) | Draws dimmed text for unavailable options. |
+| [Text wrapped](widgets/text_wrapped.md) | Draws text that wraps at the edge of the window. |
+| [Text link](widgets/text_link.md) | Draws clickable text that looks like a link. |
+| [Text link open url](widgets/text_link_open_url.md) | Draws a link that opens a URL when clicked. |
+| [Separator](widgets/separator.md) | Draws a horizontal separator line. |
+
+## Buttons and selection
+
+| Widget | Description |
+|--------|-------------|
+| [Buttons](widgets/button.md) | Clickable controls: `button`, `small_button`, `invisible_button`, and `arrow_button`. |
+| [Radio button](widgets/radio_button.md) | A radio button for choosing one option from a group. |
+| [Checkbox](widgets/checkbox.md) | Toggle booleans: `checkbox` and `checkbox_flags`. |
+| [Selectable](widgets/selectable.md) | A clickable row that can report selection. |
+| [Menus](widgets/menus.md) | Menu entries and submenus: `menu_item` and `begin_menu`. |
+| [Color button](widgets/color_button.md) | A clickable color swatch. |
+
+## Inputs
+
+| Widget | Description |
+|--------|-------------|
+| [Input text](widgets/input_text.md) | A single-line text input. |
+| [Input text multiline](widgets/input_text_multiline.md) | A multi-line text input. |
+| [Input text with hint](widgets/input_text_with_hint.md) | A text input that shows a hint while empty. |
+| [Integer inputs](widgets/input_int.md) | Scalar and multi-component integer input fields. |
+| [Float inputs](widgets/input_float.md) | Scalar, multi-component, and double-precision numeric inputs. |
+| [Drag integers](widgets/drag_int.md) | Drag integer fields, including a two-handle range. |
+| [Drag floats](widgets/drag_float.md) | Drag float fields, including a two-handle range. |
+| [Integer sliders](widgets/slider_int.md) | Horizontal and vertical integer sliders. |
+| [Float sliders](widgets/slider_float.md) | Horizontal and vertical float sliders, plus an angle slider. |
+| [Combo box](widgets/combo.md) | Choose one item from a dropdown list. |
+| [List box](widgets/list_box.md) | A scrollable list of options. |
+| [Color edit](widgets/color_edit.md) | RGB and RGBA color editing widgets. |
+| [Color picker](widgets/color_picker.md) | RGB and RGBA color pickers. |
+
+## Trees and containers
+
+| Widget | Description |
+|--------|-------------|
+| [Trees](widgets/tree.md) | Expandable sections: `tree_node`, `tree_push`, `collapsing_header`, and the `tree` context manager. |
+| [Child window](widgets/child.md) | A scrollable child region inside the current window. |
+| [Tables](widgets/table.md) | Simple column layouts with `imgui.table`, and the modern `begin_table` API. |
+| [Window](widgets/window.md) | Create your own floating window inside the app. |
+| [Popups](widgets/popups.md) | Context menus, modal dialogs, and custom popups. |
+| [Tabs](widgets/tabs.md) | Tab bars and tab items. |
 
 ## State helpers
 
-| Function | Description |
-|----------|-------------|
-| [`imgui.is_item_changed`](widgets/state_and_ids.md#is_item_changed) | Whether the last submitted value widget changed. |
-| [`imgui.set_item_value`](widgets/state_and_ids.md#set_item_value) | Change the remembered value of a widget by ID. |
-| [`++` label counter](widgets/state_and_ids.md#automatic-widget-ids-with) | Generate a per-label, per-frame ID for repeated widgets. |
-
-## Text displaying
-
 | Widget | Description |
 |--------|-------------|
-| [imgui.text](widgets/text.md) | Displays a simple text label. |
-| [imgui.text_colored](widgets/text_colored.md) | Displays a text label with a custom color. |
-| [imgui.text_disabled](widgets/text_disabled.md) | Displays a text label with a disabled appearance. |
-| [imgui.text_wrapped](widgets/text_wrapped.md) | Displays a text label with word wrapping. |
-| [imgui.text_link](widgets/text_link.md) | Displays a text label with a hyperlink appearance. |
-| [imgui.text_link_open_url](widgets/text_link_open_url.md) | Displays a hyperlink that opens a URL when clicked. |
-| [imgui.separator](widgets/separator.md) | Draws a horizontal separator line. |
-
-## Buttons and boolean inputs
-
-| Widget | Description |
-|--------|-------------|
-| [imgui.button](widgets/button.md) | Clickable button. |
-| [imgui.small_button](widgets/label_widgets.md#buttons) | Button using the small button style. |
-| [imgui.invisible_button](widgets/label_widgets.md#buttons) | Invisible button useful for custom hit areas. |
-| [imgui.arrow_button](widgets/label_widgets.md#buttons) | Button with a direction arrow. |
-| [imgui.radio_button](widgets/radio_button.md) | Radio button for mutually exclusive choices. |
-| [imgui.checkbox](widgets/checkbox.md) | Checkbox for a boolean value. |
-| [imgui.checkbox_flags](widgets/value_widgets.md#boolean-inputs) | Checkbox packed into a bit mask of flags. |
-
-## Selection
-
-| Widget | Description |
-|--------|-------------|
-| [imgui.combo](widgets/combo.md) | Dropdown list of string items. |
-| [`imgui.list_box`](widgets/value_widgets.md#selection) | Scrollable list box; returns the selected index. |
-| [`imgui.selectable`](widgets/label_widgets.md#selection) | Selectable row; can report click and selection state. |
-| [`imgui.menu_item`](widgets/label_widgets.md#selection) | Menu entry with an optional shortcut and check mark. |
-| [`imgui.color_button`](widgets/label_widgets.md#selection) | Color swatch that can be clicked. |
-
-## Text inputs
-
-| Widget | Description |
-|--------|-------------|
-| [imgui.input_text](widgets/input_text.md) | Single-line text input. |
-| [imgui.input_text_multiline](widgets/input_text_multiline.md) | Multi-line text input. |
-| [`imgui.input_text_with_hint`](widgets/value_widgets.md#text) | Text input that shows a hint when empty. |
-
-## Integer inputs
-
-| Widget | Description |
-|--------|-------------|
-| [imgui.input_int](widgets/input_int.md) | Integer input field. |
-| [`imgui.input_int2` / `input_int3` / `input_int4`](widgets/value_widgets.md#integers) | 2, 3, or 4 integer input fields. |
-| [`imgui.drag_int` / `drag_int2` / `drag_int3` / `drag_int4`](widgets/value_widgets.md#integers) | Integer drag fields. |
-| [`imgui.drag_int_range2`](widgets/value_widgets.md#integers) | Two-handle integer range. |
-| [`imgui.slider_int` / `slider_int2` / `slider_int3` / `slider_int4`](widgets/value_widgets.md#integers) | Integer sliders. |
-| [`imgui.v_slider_int`](widgets/value_widgets.md#integers) | Vertical integer slider. |
-
-## Float inputs
-
-| Widget | Description |
-|--------|-------------|
-| [imgui.input_float](widgets/input_float.md) | Float input field. |
-| [`imgui.input_float2` / `input_float3` / `input_float4`](widgets/value_widgets.md#floats) | 2, 3, or 4 float input fields. |
-| [`imgui.input_double`](widgets/value_widgets.md#floats) | Double-precision input field. |
-| [`imgui.drag_float` / `drag_float2` / `drag_float3` / `drag_float4`](widgets/value_widgets.md#floats) | Float drag fields. |
-| [`imgui.drag_float_range2`](widgets/value_widgets.md#floats) | Two-handle float range. |
-| [`imgui.slider_float` / `slider_float2` / `slider_float3` / `slider_float4`](widgets/value_widgets.md#floats) | Float sliders. |
-| [`imgui.slider_angle`](widgets/value_widgets.md#floats) | Angle slider. |
-| [`imgui.v_slider_float`](widgets/value_widgets.md#floats) | Vertical float slider. |
-
-## Colors
-
-| Widget | Description |
-|--------|-------------|
-| [`imgui.color_edit3` / `color_edit4`](widgets/value_widgets.md#colors) | RGB / RGBA color editing widget. |
-| [`imgui.color_picker3` / `color_picker4`](widgets/value_widgets.md#colors) | RGB / RGBA color picker. |
-
-## Trees
-
-| Widget | Description |
-|--------|-------------|
-| [`imgui.tree_node`](widgets/label_widgets.md#trees-and-collapsing-headers) | Expandable tree node. |
-| [`imgui.tree_push`](widgets/label_widgets.md#trees-and-collapsing-headers) | Push an ID onto the tree ID stack. |
-| [`imgui.collapsing_header`](widgets/label_widgets.md#trees-and-collapsing-headers) | Collapsible section header. |
-| [imgui.tree](widgets/tree.md) | Context manager for `tree_node` / `tree_pop`. |
-
-## Menus, popups, tabs, and containers
-
-| Widget | Description |
-|--------|-------------|
-| [`imgui.begin`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a window. |
-| [imgui.child](widgets/child.md) | Context manager for a child window. |
-| [`imgui.begin_combo`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a custom combo popup. |
-| [`imgui.begin_list_box`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a list box. |
-| [`imgui.begin_menu`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a menu. |
-| [`imgui.begin_popup`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a popup. |
-| [`imgui.begin_popup_modal`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a modal popup. |
-| [`imgui.begin_tab_bar`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a tab bar. |
-| [`imgui.begin_tab_item`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a tab item. |
-| [`imgui.begin_table`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Begin a modern table. |
-| [`imgui.open_popup`](widgets/label_widgets.md#menus-popups-tabs-and-containers) | Open a popup by ID. |
-| [`imgui.table_setup_column`](widgets/label_widgets.md#table-columns) | Declare a modern table column. |
-| [imgui.table](widgets/table.md) | Context manager for the legacy `columns()` API. |
+| [Value memory](widgets/value_memory.md) | How value widgets remember their previous value. |
+| [Labels and IDs](widgets/labels_and_ids.md) | How visible labels, `##` IDs, and the `++` counter work. |
+| [is_item_changed](widgets/is_item_changed.md) | Detect whether the last value widget changed. |
+| [set_item_value](widgets/set_item_value.md) | Change the remembered value of a widget by ID. |
 
 ## See also
 
-- [Value widgets](widgets/value_widgets.md)
-- [Label widgets](widgets/label_widgets.md)
-- [State and IDs](widgets/state_and_ids.md)
+- [Core concepts](concepts.md)
+- [Widget overview](widgets/index.md)

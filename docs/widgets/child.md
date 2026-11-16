@@ -2,59 +2,59 @@
 
 ## Description
 
-Context manager around `imgui.begin_child()` / `imgui.end_child()`. It creates
-a child window region that can be independently scrolled and clipped, and calls
-`end_child()` automatically. The context manager is truthy while the child is
-visible, so expensive contents can be guarded with `if child:`.
+A child window is a clipped, independently scrollable region inside the current
+window. It is useful for logs, lists, and any content that should not stretch
+the parent window.
+
+`imgui.child()` is a context manager: it calls `begin_child()` and
+`end_child()` for you. It is truthy while the child is visible, so expensive
+contents can be guarded with `if child:`.
+
+`imgui.begin_child()` / `imgui.end_child()` are also available for the raw
+ImGui style.
 
 ## Syntax
 
 ```py
 with imgui.child(str_id, size=None, child_flags=0, window_flags=0) as child:
     if child:
-        # Child items
         ...
-```
 
-The raw ImGui API is also available:
-
-```py
 if imgui.begin_child(str_id, size=None, child_flags=0, window_flags=0):
-    # Child items
     ...
     imgui.end_child()
 ```
 
 ## Parameters
 
-- **str_id** – (str) Child window ID. It follows the normal `##` ID rules and
-  supports a trailing `++` counter.
-- **size** – (ImVec2, optional) Size of the child window.
-- **child_flags** – (int, optional) Child window flags.
-- **window_flags** – (int, optional) Window flags.
+- **str_id** – (str) Child window ID. Supports `##` IDs and the `++` counter.
+- **size** – (ImVec2Like, optional) Child size. Use `imgui.ImVec2(width, height)`.
+- **child_flags** – (int) Optional child-window flags.
+- **window_flags** – (int) Optional window flags.
 
 ## Return
 
-A context manager whose truth value is `True` while the child is visible. It
-also exposes the **visible** attribute.
+- **child** – (context manager / bool) Truthy while the child is visible.
 
 ## Usage example
 
-```py
+```python
 from ara_imgui import App, imgui
 
+app = App("Child window")
+
 def gui():
-    if imgui.begin_child("Child Window", imgui.ImVec2(400, 200)):
-        for _ in range(100):
-            imgui.text("Too many lines")
-        imgui.end_child()
-
-    imgui.separator()
-
-    with imgui.child("Child Window 2") as child:
+    with imgui.child("Log", imgui.ImVec2(0, 120)) as child:
         if child:
-            imgui.text("This is another child window")
+            for index in range(20):
+                imgui.text(f"Log line {index}")
 
-app = App()
+    imgui.text("This text is outside the child.")
+
 app.run(gui)
 ```
+
+## See also
+
+- [Table](table.md)
+- [Trees](tree.md)

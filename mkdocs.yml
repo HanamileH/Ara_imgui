@@ -4,28 +4,48 @@ theme:
   name: material
 nav:
   - Main: index.md
+  - Core concepts: concepts.md
   - Cheat sheet: cheat_sheet.md
-  - Widget reference:
+  - Widgets:
       - Overview: widgets/index.md
-      - Value widgets: widgets/value_widgets.md
-      - Label widgets: widgets/label_widgets.md
-      - State and IDs: widgets/state_and_ids.md
-  - Individual widgets:
-      - Text: widgets/text.md
-      - Button: widgets/button.md
-      - Radio Button: widgets/radio_button.md
-      - Checkbox: widgets/checkbox.md
-      - Separator: widgets/separator.md
-      - Input Float: widgets/input_float.md
-      - Input Int: widgets/input_int.md
-      - Input text: widgets/input_text.md
-      - Input text multiline: widgets/input_text_multiline.md
-      - Combo box: widgets/combo.md
-      - Text colored: widgets/text_colored.md
-      - Text disabled: widgets/text_disabled.md
-      - Text wrapped: widgets/text_wrapped.md
-      - Text link: widgets/text_link.md
-      - Text link open url: widgets/text_link_open_url.md
-      - Begin child and end child: widgets/child.md
-      - Table: widgets/table.md
-      - Tree: widgets/tree.md
+      - Text:
+          - Text: widgets/text.md
+          - Text colored: widgets/text_colored.md
+          - Text disabled: widgets/text_disabled.md
+          - Text wrapped: widgets/text_wrapped.md
+          - Text link: widgets/text_link.md
+          - Text link open url: widgets/text_link_open_url.md
+          - Separator: widgets/separator.md
+      - Buttons and selection:
+          - Buttons: widgets/button.md
+          - Radio button: widgets/radio_button.md
+          - Checkbox: widgets/checkbox.md
+          - Selectable: widgets/selectable.md
+          - Menus: widgets/menus.md
+          - Color button: widgets/color_button.md
+      - Inputs:
+          - Input text: widgets/input_text.md
+          - Input text multiline: widgets/input_text_multiline.md
+          - Input text with hint: widgets/input_text_with_hint.md
+          - Integer inputs: widgets/input_int.md
+          - Float inputs: widgets/input_float.md
+          - Drag integers: widgets/drag_int.md
+          - Drag floats: widgets/drag_float.md
+          - Integer sliders: widgets/slider_int.md
+          - Float sliders: widgets/slider_float.md
+          - Combo box: widgets/combo.md
+          - List box: widgets/list_box.md
+          - Color edit: widgets/color_edit.md
+          - Color picker: widgets/color_picker.md
+      - Trees and containers:
+          - Trees: widgets/tree.md
+          - Child window: widgets/child.md
+          - Tables: widgets/table.md
+          - Window: widgets/window.md
+          - Popups: widgets/popups.md
+          - Tabs: widgets/tabs.md
+      - State helpers:
+          - Value memory: widgets/value_memory.md
+          - Labels and IDs: widgets/labels_and_ids.md
+          - is_item_changed: widgets/is_item_changed.md
+          - set_item_value: widgets/set_item_value.md

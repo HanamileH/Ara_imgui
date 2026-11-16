@@ -1,22 +1,23 @@
 # Ara_imgui
 
-**Ara_imgui** is a lightweight and easy-to-use wrapper around [Imgui bundle](https://github.com/pthom/imgui_bundle).
-It provides a more convenient and compact API for creating applications with Dear ImGui, and fixes some
-interface shortcomings that make working with imgui bundle difficult.
-The main goal of this library is simplified and more consistent work with the existing framework, without discarding its capabilities and power.
+**Ara_imgui** is a lightweight and easy-to-use wrapper around
+[Dear ImGui](https://github.com/ocornut/imgui) and
+[ImGui Bundle](https://github.com/pthom/imgui_bundle). It provides a compact
+Python API for building desktop tools: windows, buttons, text fields, sliders,
+tables, trees, popups, and more.
+
+You do not need prior Dear ImGui experience. The documentation explains each
+widget, its parameters, and complete runnable examples.
 
 ## Features
 
-- Simple launch of an ImGui application with a single `run` function
-- Ability to easily change the appearance, including themes and fonts
-- Value widgets return the new value directly; to react to changes, use `imgui.is_item_changed()`
-- Value widgets can reuse their previous value when the value argument is omitted or `None`
-- `imgui.set_item_value()` lets you change a remembered widget value explicitly
-- Optional per-label `++` counter for repeated widgets
-- Context managers for child regions, tables, and tree nodes
-- A curated set of flag enums in `ara_imgui.flags`
-- Every other function, type, and constant from `imgui_bundle.imgui` is re-exported unchanged
-- Ready-to-run examples in the [examples folder](https://github.com/HanamileH/Ara_imgui/tree/main/examples)
+- Start an application with a single `App.run()` call
+- Value widgets return their new value directly
+- Value widgets can remember their previous value when it is omitted
+- Explicit IDs, plus a convenient `++` counter for repeated widgets
+- Context managers for child windows, tables, and tree nodes
+- Named flag groups for input, sliders, tables, and other widgets
+- Themes and custom fonts
 
 ## Installation
 
@@ -24,14 +25,14 @@ The main goal of this library is simplified and more consistent work with the ex
 pip install ara_imgui
 ```
 
-> ⚠️ Make sure you have Python 3.7+ and OpenGL support.
+> ⚠️ Python 3.7+ and OpenGL support are required.
 
 ## Quick start
 
 ```python
 from ara_imgui import App, imgui
 
-app = App("Hello world example")
+app = App("Hello world")
 
 def gui():
     imgui.text("Hello, world!")
@@ -41,86 +42,67 @@ def gui():
 app.run(gui)
 ```
 
-## Widget reference
+`App.run()` opens a window and calls `gui()` once per frame. Every call draws
+the interface for that frame; see [Core concepts](concepts.md) for the mental
+model.
 
-The documentation is split into a few reference pages:
+## Learn the basics
 
-- [Value widgets](widgets/value_widgets.md) — all widgets that return a value and keep state
-- [Label widgets](widgets/label_widgets.md) — buttons, trees, menus, popups, tabs, and other label-based widgets
-- [State and IDs](widgets/state_and_ids.md) — value memory, `set_item_value`, `++` counters, and ID rules
-- [Context managers](widgets/child.md) — [`child`](widgets/child.md), [`table`](widgets/table.md), and [`tree`](widgets/tree.md)
-- [Cheat sheet](cheat_sheet.md) — a compact catalog of all wrapped widgets
+- [Core concepts](concepts.md) — frame loop, labels and IDs, values, vectors,
+  flags, and context managers
+- [Widget overview](widgets/index.md) — every widget grouped by category
+- [Cheat sheet](cheat_sheet.md) — a one-page lookup table
 
-Everything that is not listed as wrapped is forwarded to `imgui_bundle.imgui` unchanged.
+## Value widgets
 
-## Stateful widgets
-
-Value widgets such as `input_text`, `combo`, `slider_float`, and `color_edit3`
-return the new value directly. To find out whether the user changed it, call
-`imgui.is_item_changed()` immediately after the widget:
+Widgets such as `input_text`, `input_int`, `slider_float`, `combo`, and
+`checkbox` return their new value directly:
 
 ```python
 from ara_imgui import App, imgui
 
-app = App("Widget example")
-
-name = "Michail"
-option = 0
+app = App("Value widgets")
 
 def gui():
-    global name, option
+    name = imgui.input_text("Name", default="")
+    age = imgui.input_int("Age##input_id", default=18)
 
-    name = imgui.input_text("Name", name)
-    if imgui.is_item_changed():
-        print(f"Name changed to {name}")
-
-    option = imgui.combo("Option", option, ["One", "Two", "Three"])
+    imgui.text(f"Hello, {name or 'unknown'}! Age: {age}")
 
 app.run(gui)
 ```
 
-Widgets that do not report a changed flag (buttons, tree nodes, layout helper elements)
-keep the usual ImGui return value.
-
-### Reusing the previous value
-
-The value argument can be omitted or passed as `None`. In that case the widget
-reuses the value it returned on the previous frame. Values are remembered by
-the widget ID — the part of the label after `##` — so the same widget keeps
-its state between frames. Use `default=` to set the value for the first frame:
+The value argument is optional. Omit it, or pass `None`, and the widget reuses
+the value from the previous frame. Use `default=` for the first frame:
 
 ```python
-def gui():
-    name = imgui.input_text("Name")
-    age = imgui.input_int("Age##input_id", default=18)
-    option = imgui.combo("Option", items=["One", "Two", "Three"])
+name = imgui.input_text("Name")                    # remembered automatically
+age = imgui.input_int("Age##input_id", default=18) # 18 on the first frame
 ```
 
-Passing a value explicitly overwrites the remembered one, so both styles can
-be mixed. For example, a button can reset a widget:
-
-```python
-new_age = 18 if imgui.button("Reset age") else None
-age = imgui.input_int("Age##input_id", new_age, default=18)
-```
-
-The remembered value can also be changed explicitly with `set_item_value()`.
-It accepts either the widget ID (the part after `##`) or the whole label:
+You can change the remembered value from code:
 
 ```python
 imgui.set_item_value("Age##input_id", 18)
 ```
 
-Passing `None` forgets the remembered value, so the widget falls back to its
-`default=` or zero value on the next frame.
+To detect edits, call `imgui.is_item_changed()` immediately after the widget.
+See [Value memory](widgets/value_memory.md),
+[imgui.set_item_value](widgets/set_item_value.md), and
+[imgui.is_item_changed](widgets/is_item_changed.md).
 
-See [State and IDs](widgets/state_and_ids.md) for details.
+## Labels and IDs
 
-## Automatic widget IDs with `++`
+Every interactive widget needs an ID that is unique inside its window. The
+visible label doubles as the ID by default. Use `##` to keep a stable ID while
+changing the visible text:
 
-When the same widget is submitted several times in a loop, a label ending in
-`++` gets a unique ID from a per-label counter. The counter restarts at zero
-every frame:
+```python
+imgui.input_text("Name##player_name")
+```
+
+For widgets created in a loop, a label ending in `++` generates an ID
+automatically:
 
 ```python
 for row in rows:
@@ -129,40 +111,35 @@ for row in rows:
         ...
 ```
 
-The first `Name++` becomes `Name##Name_0`, the second `Name##Name_1`, and so
-on. `Delete++` uses its own counter, independent of `Name++`.
-
-Use `\++` when the label itself should end with a literal `++` (in Python
-source, escape the backslash too):
+This is convenient while the order of rows is stable. When rows can be
+inserted, removed, or reordered, use an explicit ID instead:
 
 ```python
-imgui.button("C\\++")  # displayed as C++
+for row in rows:
+    imgui.input_text(f"Name##row_{row.id}", row["name"])
+    if imgui.button(f"Delete##row_{row.id}"):
+        ...
 ```
 
-`++` cannot be combined with an explicit `##` ID: a warning is printed, and
-the counter is appended to the explicit ID. Using `++` with a stateful (value)
-widget also prints a warning, because a remembered value is attached to the
-generated ID and can move to another item when the order changes.
+See [Labels and IDs](widgets/labels_and_ids.md) for the escape sequence,
+warnings, and the full rules.
 
-> ⚠️ **This is not the best practice.** The counter depends on submission
-> order: if rows are inserted, removed, or reordered, IDs shift and widgets can
-> pick up another row's state. Use `++` only when the item order is stable.
-> Otherwise specify an explicit ID, for example
-> `imgui.input_text(f"Name##row_{row.id}", row["name"])`.
+## Flags
 
-## Flag enums
-
-Flag enums are located in `ara_imgui.flags` and are grouped by the widget or function
-to which they relate:
+Some widgets accept an optional `flags` bit mask. Named flag groups live in
+`ara_imgui.flags`:
 
 ```python
-from ara_imgui import imgui, flags
+from ara_imgui import App, flags, imgui
 
-input_flags = (
-    flags.input_text.chars_no_blank
-    | flags.input_text.password
-)
-password = imgui.input_text("Enter your password", password, flags=input_flags)
+app = App("Flags")
+
+def gui():
+    input_flags = flags.input_text.chars_no_blank | flags.input_text.password
+    password = imgui.input_text("Password", flags=input_flags)
+    imgui.text(f"Length: {len(password)}")
+
+app.run(gui)
 ```
 
 Available groups: `backend`, `button`, `child`, `color_edit`, `combo`,
@@ -171,119 +148,83 @@ Available groups: `backend`, `button`, `child`, `color_edit`, `combo`,
 `multi_select`, `popup`, `selectable`, `slider`, `tab_bar`, `tab_item`,
 `table`, `table_column`, `table_row`, `tree_node`, `viewport`, `window`.
 
-Each group is the same enum class as `*Flags_` in `imgui_bundle`, so the original
-spellings (`imgui.InputTextFlags_`) also continue to work.
-You can still import flags from `imgui` if you wish.
+The original `imgui.InputTextFlags_` names also work.
 
 ## Context managers
 
-`imgui.child()`, `imgui.table()`, and `imgui.tree()` can be used as context
-managers, so the corresponding `end_child()` / `columns(1)` / `tree_pop()`
-call is done for you:
+`imgui.child()`, `imgui.table()`, and `imgui.tree()` clean up their matching
+`end` call for you:
 
 ```python
 with imgui.child("Log", size=imgui.ImVec2(0, 120)):
     imgui.text("Child content")
-```
 
-`imgui.table()` wraps the `imgui.columns()` API. Columns are set up
-for you, and if `headers` is specified, they are drawn as the first row. Cells
-are passed using `imgui.next_column()`, which automatically wraps to a new row
-after the last column:
-
-```python
 with imgui.table("People", 3, ["Name", "Age", "Sex"]):
-    for name, age, sex in people:
-        imgui.text(name)
-        imgui.next_column()
-        imgui.text(str(age))
-        imgui.next_column()
-        imgui.text(sex)
-        imgui.next_column()
-```
+    imgui.text("John")
+    imgui.next_column()
+    imgui.text("25")
+    imgui.next_column()
+    imgui.text("Male")
+    imgui.next_column()
 
-`columns` can be omitted if `headers` is specified
-(`imgui.table("People", headers=[...])`). Borders are enabled by default; pass
-`borders=False` to disable them. If you need the modern table API
-(sorting, resizing, scrolling), use `imgui.begin_table()` / `imgui.end_table()`
-directly.
-
-A collapsed tree node should not draw its contents, so guard the body. The context
-manager is truthy only while the node is open:
-
-```python
-with imgui.tree("Settings") as node:
-    if node:
+with imgui.tree("Settings") as opened:
+    if opened:
         imgui.text("Advanced options")
 ```
 
-`imgui.child()` is also truthy while visible, so the same guard can be used
-around expensive content.
+See [Child window](widgets/child.md), [Tables](widgets/table.md), and
+[Trees](widgets/tree.md) for details.
 
-See [Context managers](widgets/child.md) for the full reference:
-[`child`](widgets/child.md), [`table`](widgets/table.md), and
-[`tree`](widgets/tree.md).
-
-## Custom fonts and themes
+## Fonts and themes
 
 ```python
 from ara_imgui import App, imgui, themes
 
-font_path = R"C:\Windows\Fonts\Arial.ttf"
-
-app = App("Font Example")
+app = App("Font example")
 app.apply_theme(themes.cherry)
-app.load_font(font_path, font_size=20)
+app.load_font(R"C:\Windows\Fonts\Arial.ttf", font_size=20)
 
 def gui():
-    imgui.text("Sample text with custom font")
+    imgui.text("Custom font and theme")
 
 app.run(gui)
 ```
 
-## Themes
+`themes` is an enum. A plain string name also works:
+`app.apply_theme("dark")`.
 
-`themes` is an enum, so `themes.dark`, `themes.light`,
-`themes.cherry`, etc. can be passed to `app.apply_theme()`. A plain
-string name also works: `app.apply_theme("dark")`.
+Available themes:
 
-Available themes (list from `imgui_bundle`):
-- `dark`
-- `light`
-- `classic`
+- `dark`, `light`, `classic`
 - `material_flat`
 - `photoshop_style`
-- `gray_variations`
-- `gray_variations_darker`
+- `gray_variations`, `gray_variations_darker`
 - `microsoft_style`
 - `cherry`
-- `darcula`
-- `darcula_darker`
+- `darcula`, `darcula_darker`
 - `light_rounded`
-- `so_dark_accent_blue`
-- `so_dark_accent_yellow`
-- `so_dark_accent_red`
-- `black_is_black`
-- `white_is_white`
+- `so_dark_accent_blue`, `so_dark_accent_yellow`, `so_dark_accent_red`
+- `black_is_black`, `white_is_white`
 
-Some of them map to differently named internal `imgui_bundle` themes (for example,
-`themes.dark` uses `hello_imgui.ImGuiTheme_.imgui_colors_dark`). This is intentional
-to preserve backward compatibility with older versions of `Ara_imgui`.
+The names match ImGui Bundle's theme names. `themes.dark`, for example, uses
+`hello_imgui.ImGuiTheme_.imgui_colors_dark` internally.
 
 ## Examples
 
-See the [examples folder](https://github.com/HanamileH/Ara_imgui/tree/main/examples):
+The repository contains ready-to-run examples:
 
-* `hello_world.py` — Basic "Hello, world!" with a button.
-* `basic_window.py` — A simple window with an input field.
-* `custom_font.py` — Font rendering and multilingual text.
-* `widget_examples.py` — Most common widgets.
-* `table_example.py` — A table with headers built using `imgui.table()`.
-* `flags_example.py` — A compact overview of the `ara_imgui.flags` groups.
+- [hello_world.py](https://github.com/HanamileH/Ara_imgui/blob/main/examples/hello_world.py) — basic "Hello, world!" with a button
+- [basic_window.py](https://github.com/HanamileH/Ara_imgui/blob/main/examples/basic_window.py) — a simple window with an input field
+- [custom_font.py](https://github.com/HanamileH/Ara_imgui/blob/main/examples/custom_font.py) — custom fonts and multilingual text
+- [widget_examples.py](https://github.com/HanamileH/Ara_imgui/blob/main/examples/widget_examples.py) — most common widgets
+- [table_example.py](https://github.com/HanamileH/Ara_imgui/blob/main/examples/table_example.py) — a table with headers
+- [flags_example.py](https://github.com/HanamileH/Ara_imgui/blob/main/examples/flags_example.py) — an overview of the flag groups
 
 ## Dependencies
 
-* `imgui_bundle`
+- Python 3.7+
+- OpenGL support
+- ImGui Bundle (installed automatically with `pip install ara_imgui`)
 
 ## License
 
