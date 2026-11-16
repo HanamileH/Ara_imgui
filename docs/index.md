@@ -6,12 +6,17 @@ interface shortcomings that make working with imgui bundle difficult.
 The main goal of this library is simplified and more consistent work with the existing framework, without discarding its capabilities and power.
 
 ## Features
+
 - Simple launch of an ImGui application with a single `run` function
-- Ability to easily change the appearance, including themes and font
-- Value widgets return the new value directly; to react to changes, use `imgui.is_item_changed()` (see below for details)
+- Ability to easily change the appearance, including themes and fonts
+- Value widgets return the new value directly; to react to changes, use `imgui.is_item_changed()`
+- Value widgets can reuse their previous value when the value argument is omitted or `None`
+- `imgui.set_item_value()` lets you change a remembered widget value explicitly
+- Optional per-label `++` counter for repeated widgets
 - Context managers for child regions, tables, and tree nodes
-- Fixes for various other small things
-- Ready-to-run examples in the `examples` folder
+- A curated set of flag enums in `ara_imgui.flags`
+- Every other function, type, and constant from `imgui_bundle.imgui` is re-exported unchanged
+- Ready-to-run examples in the [examples folder](https://github.com/HanamileH/Ara_imgui/tree/main/examples)
 
 ## Installation
 
@@ -21,14 +26,7 @@ pip install ara_imgui
 
 > ⚠️ Make sure you have Python 3.7+ and OpenGL support.
 
-## Documentation
-
-See the [Ara_imgui documentation](https://hanamileh.github.io/Ara_imgui/) for detailed documentation.
-The documentation includes information about using the library, available features, and widgets.
-
-## Usage
-
-### Quick start
+## Quick start
 
 ```python
 from ara_imgui import App, imgui
@@ -43,7 +41,19 @@ def gui():
 app.run(gui)
 ```
 
-### Stateful widgets
+## Widget reference
+
+The documentation is split into a few reference pages:
+
+- [Value widgets](widgets/value_widgets.md) — all widgets that return a value and keep state
+- [Label widgets](widgets/label_widgets.md) — buttons, trees, menus, popups, tabs, and other label-based widgets
+- [State and IDs](widgets/state_and_ids.md) — value memory, `set_item_value`, `++` counters, and ID rules
+- [Context managers](widgets/child.md) — [`child`](widgets/child.md), [`table`](widgets/table.md), and [`tree`](widgets/tree.md)
+- [Cheat sheet](cheat_sheet.md) — a compact catalog of all wrapped widgets
+
+Everything that is not listed as wrapped is forwarded to `imgui_bundle.imgui` unchanged.
+
+## Stateful widgets
 
 Value widgets such as `input_text`, `combo`, `slider_float`, and `color_edit3`
 return the new value directly. To find out whether the user changed it, call
@@ -72,30 +82,75 @@ app.run(gui)
 Widgets that do not report a changed flag (buttons, tree nodes, layout helper elements)
 keep the usual ImGui return value.
 
-If you need the old familiar behavior, you can import `imgui` from `imgui_bundle`:
+### Reusing the previous value
+
+The value argument can be omitted or passed as `None`. In that case the widget
+reuses the value it returned on the previous frame. Values are remembered by
+the widget ID — the part of the label after `##` — so the same widget keeps
+its state between frames. Use `default=` to set the value for the first frame:
+
 ```python
-from ara_imgui import App
-from imgui_bundle import imgui
-
-app = App("Widget example")
-
-name = "Michail"
-option = 0
-
 def gui():
-    global name, option
-
-    changed, name = imgui.input_text("Name", name)
-
-    if changed:
-        print(f"Name changed to {name}")
-
-    _, option = imgui.combo("Option", option, ["One", "Two", "Three"])
-
-app.run(gui)
+    name = imgui.input_text("Name")
+    age = imgui.input_int("Age##input_id", default=18)
+    option = imgui.combo("Option", items=["One", "Two", "Three"])
 ```
 
-### Flag enums
+Passing a value explicitly overwrites the remembered one, so both styles can
+be mixed. For example, a button can reset a widget:
+
+```python
+new_age = 18 if imgui.button("Reset age") else None
+age = imgui.input_int("Age##input_id", new_age, default=18)
+```
+
+The remembered value can also be changed explicitly with `set_item_value()`.
+It accepts either the widget ID (the part after `##`) or the whole label:
+
+```python
+imgui.set_item_value("Age##input_id", 18)
+```
+
+Passing `None` forgets the remembered value, so the widget falls back to its
+`default=` or zero value on the next frame.
+
+See [State and IDs](widgets/state_and_ids.md) for details.
+
+## Automatic widget IDs with `++`
+
+When the same widget is submitted several times in a loop, a label ending in
+`++` gets a unique ID from a per-label counter. The counter restarts at zero
+every frame:
+
+```python
+for row in rows:
+    imgui.input_text("Name++", row["name"])
+    if imgui.button("Delete++"):
+        ...
+```
+
+The first `Name++` becomes `Name##Name_0`, the second `Name##Name_1`, and so
+on. `Delete++` uses its own counter, independent of `Name++`.
+
+Use `\++` when the label itself should end with a literal `++` (in Python
+source, escape the backslash too):
+
+```python
+imgui.button("C\\++")  # displayed as C++
+```
+
+`++` cannot be combined with an explicit `##` ID: a warning is printed, and
+the counter is appended to the explicit ID. Using `++` with a stateful (value)
+widget also prints a warning, because a remembered value is attached to the
+generated ID and can move to another item when the order changes.
+
+> ⚠️ **This is not the best practice.** The counter depends on submission
+> order: if rows are inserted, removed, or reordered, IDs shift and widgets can
+> pick up another row's state. Use `++` only when the item order is stable.
+> Otherwise specify an explicit ID, for example
+> `imgui.input_text(f"Name##row_{row.id}", row["name"])`.
+
+## Flag enums
 
 Flag enums are located in `ara_imgui.flags` and are grouped by the widget or function
 to which they relate:
@@ -120,7 +175,7 @@ Each group is the same enum class as `*Flags_` in `imgui_bundle`, so the origina
 spellings (`imgui.InputTextFlags_`) also continue to work.
 You can still import flags from `imgui` if you wish.
 
-### Context managers
+## Context managers
 
 `imgui.child()`, `imgui.table()`, and `imgui.tree()` can be used as context
 managers, so the corresponding `end_child()` / `columns(1)` / `tree_pop()`
@@ -141,10 +196,8 @@ with imgui.table("People", 3, ["Name", "Age", "Sex"]):
     for name, age, sex in people:
         imgui.text(name)
         imgui.next_column()
-
         imgui.text(str(age))
         imgui.next_column()
-        
         imgui.text(sex)
         imgui.next_column()
 ```
@@ -167,7 +220,11 @@ with imgui.tree("Settings") as node:
 `imgui.child()` is also truthy while visible, so the same guard can be used
 around expensive content.
 
-### Custom fonts and themes
+See [Context managers](widgets/child.md) for the full reference:
+[`child`](widgets/child.md), [`table`](widgets/table.md), and
+[`tree`](widgets/tree.md).
+
+## Custom fonts and themes
 
 ```python
 from ara_imgui import App, imgui, themes
@@ -184,7 +241,7 @@ def gui():
 app.run(gui)
 ```
 
-### Themes
+## Themes
 
 `themes` is an enum, so `themes.dark`, `themes.light`,
 `themes.cherry`, etc. can be passed to `app.apply_theme()`. A plain
@@ -215,7 +272,7 @@ to preserve backward compatibility with older versions of `Ara_imgui`.
 
 ## Examples
 
-See the [`examples/`](./examples) folder:
+See the [examples folder](https://github.com/HanamileH/Ara_imgui/tree/main/examples):
 
 * `hello_world.py` — Basic "Hello, world!" with a button.
 * `basic_window.py` — A simple window with an input field.
@@ -227,8 +284,6 @@ See the [`examples/`](./examples) folder:
 ## Dependencies
 
 * `imgui_bundle`
-* `imgui`
-* `glfw`
 
 ## License
 

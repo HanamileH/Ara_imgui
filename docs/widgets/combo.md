@@ -1,65 +1,76 @@
 # imgui.combo
+
 ## Description
-Displays a combo box with a list of options. Allows the user to select one of the options.
+
+Displays a combo box with a list of options and returns the index of the
+selected item.
+
+The current item argument is optional. When it is omitted or `None`, the widget
+reuses the value it returned on the previous frame. See
+[State and IDs](state_and_ids.md#value-memory).
 
 ## Syntax
+
 ```py
-selected = imgui.combo(label, selected, items, popup_max_items_in_height)
+selected = imgui.combo(label, current_item=None, items=[...], popup_max_height_in_items=-1)
+```
+
+The second overload accepts a `\0`-separated string:
+
+```py
+selected = imgui.combo(label, current_item=None, items_separated_by_zeros="One\0Two\0Three\0")
 ```
 
 ## Parameters
-- **label** – (str) Text to display next to the combo box. Must be in string format.
-- **selected** – (int) Index of the currently selected item.
-- **items** – (list) List of items to display in the combo box.
-- **popup_max_items_in_height** – (int, optional) Maximum number of items to display in the combo box. If the number of items exceeds this value, a scrollbar will be displayed.
+
+- **label** – (str) Text displayed next to the combo box. Supports `##` IDs and
+  the `++` counter.
+- **current_item** – (int, optional) Index of the selected item. Omit it or
+  pass `None` to reuse the previous value.
+- **items** – (list[str]) Options to display.
+- **items_separated_by_zeros** – (str) Options separated by `\0`, ending with
+  `\0\0`.
+- **popup_max_height_in_items** – (int, optional) Maximum number of items shown
+  before the popup scrolls. Default is `-1`.
+- **default** – (int, keyword-only) Selected index for the first frame.
 
 ## Return
-- **selected** – (int) Index of the currently selected item.
+
+- **selected** – (int) Index of the selected item.
 
 ## Usage example
-```py
+
+```python
 from ara_imgui import App, imgui
 
 options = ["Apple", "Banana", "Cherry", "Watermelon"]
-selected = 0
 
 def gui():
-    global selected
-
-    selected = imgui.combo("Fruit", selected, options)
-
+    selected = imgui.combo("Fruit", items=options)
     imgui.text(f"You selected: {options[selected]}")
+
+    if imgui.button("Reset selection"):
+        imgui.set_item_value("Fruit", 0)
 
 app = App()
 app.run(gui)
 ```
 
-<br>
+### Example with user data
 
-Usage example with user data:
-```py
+```python
 from ara_imgui import App, imgui
 
 users = [{"id": i, "name": f"User {i}", "age": i % 30 + 20} for i in range(100)]
 
-selected_pos = 0
-selected_id = users[selected_pos]['id']
-
 def gui():
-    global selected_pos, selected_id
-
     selected_pos = imgui.combo(
         "Users",
-        selected_pos,
-        [f'{user["name"]} age: {user["age"]}' for user in users],
-        10
+        items=[f'{user["name"]} age: {user["age"]}' for user in users],
+        popup_max_height_in_items=10,
     )
 
-    if imgui.is_item_changed():
-        selected_id = users[selected_pos]['id']
-
-    imgui.text(f"Selected user id: {selected_id}")
-
+    imgui.text(f"Selected user id: {users[selected_pos]['id']}")
 
 app = App()
 app.run(gui)

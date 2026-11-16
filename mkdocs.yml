@@ -5,7 +5,12 @@ theme:
 nav:
   - Main: index.md
   - Cheat sheet: cheat_sheet.md
-  - Widgets:
+  - Widget reference:
+      - Overview: widgets/index.md
+      - Value widgets: widgets/value_widgets.md
+      - Label widgets: widgets/label_widgets.md
+      - State and IDs: widgets/state_and_ids.md
+  - Individual widgets:
       - Text: widgets/text.md
       - Button: widgets/button.md
       - Radio Button: widgets/radio_button.md
@@ -22,3 +27,5 @@ nav:
       - Text link: widgets/text_link.md
       - Text link open url: widgets/text_link_open_url.md
       - Begin child and end child: widgets/child.md
+      - Table: widgets/table.md
+      - Tree: widgets/tree.md
